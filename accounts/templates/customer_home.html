@@ -157,7 +157,7 @@
                   {% for img in v.all_images %}
                     <div class="snap-center flex-shrink-0 w-full h-48 sm:h-56 relative">
                       <img src="{{ img.image.url }}"
-                          class="w-full h-full object-cover rounded-xl">
+                          class="w-full h-full object-cover rounded-xl" loading="lazy">
                     </div>
                   {% endfor %}
                 </div>
