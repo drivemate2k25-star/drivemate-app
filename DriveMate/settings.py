@@ -9,7 +9,7 @@ SECRET_KEY = 'django-insecure-hb-$mrfy*&*oi_9s#sx@!5ium68z-w_b96s4s=^o_3t-k2lbvg
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['https://drivemate-app.onrender.com']
+ALLOWED_HOSTS = ['drivemate-app.onrender.com']
 
 
 # Application definition
