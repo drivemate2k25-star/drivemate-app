@@ -18,6 +18,10 @@ from rides.utils import haversine_distance
 from django.db.models import Q
 from django.db.models import Avg, Count, Prefetch
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> a1d28e6607fcb3e04f9e842d5f02671882c6cc5a
 def health_check(request):
     return JsonResponse({"status": "ok"})
 

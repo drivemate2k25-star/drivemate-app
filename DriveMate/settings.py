@@ -10,7 +10,10 @@ SECRET_KEY = 'django-insecure-hb-$mrfy*&*oi_9s#sx@!5ium68z-w_b96s4s=^o_3t-k2lbvg
 DEBUG = True
 
 ALLOWED_HOSTS = ['drivemate-app.onrender.com']
+<<<<<<< HEAD
 # ALLOWED_HOSTS = []
+=======
+>>>>>>> a1d28e6607fcb3e04f9e842d5f02671882c6cc5a
 
 
 # Application definition
@@ -104,6 +107,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
