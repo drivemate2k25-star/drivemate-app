@@ -1,0 +1,367 @@
+<!-- my_trips.html (upgraded UI) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% load address_filters %}
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Trips — DriveMate</title>
+
+  <!-- Fonts & Material Symbols -->
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+  <script src="/static/tailwind.js"></script>
+
+  <style>
+    :root{
+      --text:#0f172a;
+      --muted:#6b7280;
+      --border:#e6e6eb;
+      --card:#ffffff;
+      --accent:#111827; /* used for headings/icons */
+    }
+    body{ font-family: 'Space Grotesk', sans-serif; background: #fafafa; color:var(--text); }
+    .material-symbols-outlined{ font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .status-pill{ padding: .25rem .6rem; border-radius: 9999px; font-weight:600; font-size:.85rem; }
+    /* tiny helper (if no utility present) */
+    .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
+    /* subtle table row animation for expand */
+    .details-row { transition: max-height .28s ease; overflow: hidden; }
+  </style>
+</head>
+<body class="antialiased">
+
+  <!-- Header -->
+  <header class="bg-white shadow-sm">
+    <div class="container mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-3xl" style="color:var(--accent)">directions_car</span>
+        <h1 class="text-2xl font-bold tracking-tight">DriveMate</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="{% url 'customer_profile' %}" class="inline-flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50 text-sm">
+          <span class="material-symbols-outlined">person</span> Profile
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-6 py-8 mb-20">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-3xl font-bold">My Trips</h2>
+
+      <form method="get" class="flex items-center gap-3">
+        <label for="status" class="text-sm text-gray-600">Filter</label>
+        <select name="status" id="status" onchange="this.form.submit()" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-200 text-sm">
+          <option value="">All</option>
+          {% for val,label in status_choices %}
+            <option value="{{ val }}" {% if request.GET.status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+
+    {% if rides %}
+    <!-- Desktop table -->
+    <div class="hidden md:block bg-white rounded-2xl shadow overflow-hidden border border-gray-100">
+      <table class="w-full">
+        <thead class="bg-gray-50">
+          <tr class="text-left text-sm text-gray-600">
+            <th class="px-6 py-4">Ride</th>
+            <th class="px-6 py-4">Route</th>
+            <th class="px-6 py-4">Mode</th>
+            <th class="px-6 py-4">Status</th>
+            <th class="px-6 py-4">Created</th>
+            <th class="px-6 py-4">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y">
+          {% for ride in rides %}
+          <tr class="group bg-white hover:bg-gray-50 transition">
+            <td class="px-6 py-4 align-top text-sm text-gray-800 font-medium">#{{ ride.pk }}</td>
+
+            <!-- Route cell: trimmed preview; full addresses available to JS in data attributes -->
+            <td class="px-6 py-4 align-top text-sm text-gray-700">
+              <div class="truncate max-w-[28rem]">
+                <span class="inline-block mr-2 text-xs text-gray-500">From</span>
+                <span class="font-medium">{{ ride.start_location|before_comma }}</span>
+                <span class="mx-2 text-gray-300">→</span>
+                <span class="font-medium">{{ ride.end_location|before_comma }}</span>
+              </div>
+
+              <!-- hidden data for JS to render details when expanded -->
+              <div class="ride-data sr-only" aria-hidden="true"
+                data-from="{{ ride.start_location|escapejs }}"
+                data-to="{{ ride.end_location|escapejs }}"
+                data-driver="{{ ride.driver.user.name|default:'N/A'|escapejs }}">
+              </div>
+            </td>
+
+            <td class="px-6 py-4 align-top text-sm text-gray-700">{{ ride.get_ride_mode_display }}</td>
+
+            <td class="px-6 py-4 align-top">
+              <span class="status-pill bg-gray-50 text-gray-800 border border-gray-200">
+                {{ ride.get_status_display }}
+              </span>
+            </td>
+
+            <td class="px-6 py-4 text-sm text-gray-500">{{ ride.created_at|date:"Y-m-d H:i" }}</td>
+
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-2">
+                <a class="px-3 py-2 rounded-lg border border-gray-200 text-sm hover:bg-gray-50" href="{% url 'trip_detail' ride.id %}">View</a>
+
+                {% if ride.status == "requested" %}
+                  <a class="px-3 py-2 rounded-lg border border-green-200 bg-green-50 text-sm hover:bg-green-100" href="{% url 'select_driver' ride.id %}">Select driver</a>
+                {% elif ride.status == "cancelled" %}
+                  <a class="px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-sm hover:bg-blue-100" href="{% url 'select_driver' ride.id %}">Find driver</a>
+                {% endif %}
+
+                {% if ride.status != "cancelled" and ride.status != "completed" %}
+                  <form style="display:inline" method="post" action="{% url 'trip_detail' ride.id %}" onsubmit="return confirm('Cancel this ride?')">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="cancel_ride">
+                    <button type="submit" class="px-3 py-2 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Cancel</button>
+                  </form>
+                {% endif %}
+
+                <!-- expand toggle (desktop only) -->
+                <button type="button" class="ml-1 text-gray-500 hover:text-gray-700 p-2 rounded-md group-hover:bg-gray-100" aria-expanded="false" data-toggle-details>
+                  <span class="material-symbols-outlined" style="font-size:18px">expand_more</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- expandable details row (desktop) -->
+          <tr class="bg-white details-row" data-details-row style="max-height:0;">
+            <td colspan="6" class="px-6 py-0">
+              <div class="max-w-7xl mx-auto px-6 py-4 border-t border-gray-100">
+                <!-- JS will inject structured details here using the ride-data above -->
+                <div class="details-render"></div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile: stacked cards -->
+    <div class="md:hidden space-y-4">
+      {% for ride in rides %}
+      <div class="bg-white rounded-2xl shadow p-4 transform hover:-translate-y-1 transition">
+        <div class="flex justify-between items-start gap-4">
+          <div class="flex-1 min-w-0">
+            <div class="text-sm text-gray-500">Ride #{{ ride.pk }}</div>
+            <div class="font-semibold text-gray-900 mt-1 truncate">{{ ride.start_location|truncatechars:60 }} → {{ ride.end_location|truncatechars:60 }}</div>
+            <div class="text-xs text-gray-400 mt-1">{{ ride.created_at|date:"Y-m-d H:i" }}</div>
+          </div>
+
+          <div class="text-right">
+            <div class="text-sm text-gray-600">{{ ride.get_ride_mode_display }}</div>
+            <div class="mt-2">
+              <span class="inline-block status-pill bg-gray-50 text-gray-800 border border-gray-200">{{ ride.get_status_display }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-wrap gap-2 items-center">
+          <a class="px-3 py-2 rounded-lg border border-gray-200 text-sm" href="{% url 'trip_detail' ride.id %}">View</a>
+
+          {% if ride.status == "requested" %}
+            <a class="px-3 py-2 rounded-lg border border-green-200 bg-green-50 text-sm" href="{% url 'select_driver' ride.id %}">Select driver</a>
+          {% elif ride.status == "cancelled" %}
+            <a class="px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-sm" href="{% url 'select_driver' ride.id %}">Find driver</a>
+          {% endif %}
+
+          {% if ride.status != "cancelled" and ride.status != "completed" %}
+            <form style="display:inline" method="post" action="{% url 'trip_detail' ride.id %}" onsubmit="return confirm('Cancel this ride?')">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="cancel_ride">
+              <button type="submit" class="px-3 py-2 rounded-lg bg-red-600 text-white text-sm">Cancel</button>
+            </form>
+          {% endif %}
+
+          <!-- mobile details toggle -->
+          <button type="button" class="ml-auto text-gray-500 hover:text-gray-700 px-3 py-2 rounded-lg border border-gray-100" data-mobile-toggle>
+            Details
+          </button>
+
+          <!-- hidden structured details for mobile (JS will render) -->
+          <div class="w-full mt-3 mobile-details hidden">
+            <div class="rounded-lg border border-gray-100 p-3">
+              <div class="text-xs text-gray-600 mb-2">From</div>
+              <div class="text-sm text-gray-900 mb-2">{{ ride.start_location }}</div>
+              <div class="text-xs text-gray-600 mb-2">To</div>
+              <div class="text-sm text-gray-900">{{ ride.end_location }}</div>
+              {% if ride.driver %}
+                <div class="mt-3 text-sm text-gray-700"><strong>Driver:</strong> {{ ride.driver.user.name|default:"N/A" }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+      <div class="text-center p-8 bg-white rounded-2xl border border-gray-100 text-gray-500">
+        You have no trips yet.
+      </div>
+    {% endif %}
+
+  </main>
+
+  <!-- Footer nav -->
+  <footer class="w-full fixed bottom-0 bg-white border-t border-gray-200">
+    <div class="container mx-auto">
+      <nav class="flex justify-around">
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--muted)] hover:text-[var(--accent)] flex-1" href="{% url 'customer_dashboard'%}">
+          <span class="material-symbols-outlined">home</span>
+          <span class="text-xs font-bold">Home</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--accent)] border-t-2 border-[var(--accent)] flex-1" href="{% url 'my_trips'%}">
+          <span class="material-symbols-outlined">local_taxi</span>
+          <span class="text-xs font-bold">Ride</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--muted)] hover:text-[var(--accent)] flex-1" href="{% url 'customer_profile' %}">
+          <span class="material-symbols-outlined">person</span>
+          <span class="text-xs font-bold">Profile</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--muted)] hover:text-[var(--accent)] flex-1" href="{% url 'customer_payment_history'%}">
+          <span class="material-symbols-outlined">payment</span>
+          <span class="text-xs font-bold">Payments</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--muted)] hover:text-[var(--accent)] flex-1" href="#">
+          <span class="material-symbols-outlined">support_agent</span>
+          <span class="text-xs font-bold">Support</span>
+        </a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- JS: expand details (desktop) & mobile toggles + render structured details + copy -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+
+    // Helper to create element
+    function el(tag, classes = '', html = '') {
+      const e = document.createElement(tag);
+      if (classes) e.className = classes;
+      if (html !== undefined) e.innerHTML = html;
+      return e;
+    }
+
+    // copy helper
+    function copyText(text, btn) {
+      if (!navigator.clipboard) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        ta.remove();
+        flash(btn, 'Copied');
+        return;
+      }
+      navigator.clipboard.writeText(text).then(() => flash(btn, 'Copied'));
+    }
+    function flash(btn, msg) {
+      const tip = document.createElement('span');
+      tip.className = 'ml-2 text-xs text-gray-700';
+      tip.textContent = msg;
+      btn.parentNode.appendChild(tip);
+      setTimeout(() => tip.remove(), 1200);
+    }
+
+    // desktop expand rows
+    const toggles = document.querySelectorAll('[data-toggle-details]');
+    toggles.forEach(btn => {
+      btn.addEventListener('click', function () {
+        // find the parent row and next details-row
+        const row = btn.closest('tr');
+        const detailsRow = row.nextElementSibling;
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+        // toggle icon rotate
+        const icon = btn.querySelector('.material-symbols-outlined');
+        if (icon) icon.innerText = expanded ? 'expand_more' : 'expand_less';
+
+        if (!expanded) {
+          // populate details (render) from ride-data in the main row
+          const rideData = row.querySelector('.ride-data');
+          const renderTarget = detailsRow.querySelector('.details-render');
+          renderTarget.innerHTML = ''; // clear
+
+          const from = rideData?.dataset?.from || '';
+          const to = rideData?.dataset?.to || '';
+          const driver = rideData?.dataset?.driver || '';
+
+          // build structure: two columns for From/To + driver row + copy buttons
+          const container = el('div', 'grid grid-cols-1 md:grid-cols-2 gap-4');
+
+          if (from) {
+            const box = el('div', 'rounded-lg border border-gray-200 p-3');
+            box.appendChild(el('div','text-xs font-semibold text-gray-700 mb-1','From'));
+            box.appendChild(el('div','text-sm text-gray-900 whitespace-pre-line', escapeHtml(from)));
+            const copyBtn = el('button','mt-3 text-xs inline-flex items-center px-2 py-1 border rounded-md text-gray-800 hover:bg-gray-50','Copy');
+            copyBtn.addEventListener('click', () => copyText(from, copyBtn));
+            box.appendChild(copyBtn);
+            container.appendChild(box);
+          }
+
+          if (to) {
+            const box = el('div', 'rounded-lg border border-gray-200 p-3');
+            box.appendChild(el('div','text-xs font-semibold text-gray-700 mb-1','To'));
+            box.appendChild(el('div','text-sm text-gray-900 whitespace-pre-line', escapeHtml(to)));
+            const copyBtn = el('button','mt-3 text-xs inline-flex items-center px-2 py-1 border rounded-md text-gray-800 hover:bg-gray-50','Copy');
+            copyBtn.addEventListener('click', () => copyText(to, copyBtn));
+            box.appendChild(copyBtn);
+            container.appendChild(box);
+          }
+
+          // driver
+          if (driver) {
+            const meta = el('div','mt-2 md:col-span-2 flex items-center justify-between');
+            meta.appendChild(el('div','text-sm text-gray-700','<strong>Driver:</strong> ' + escapeHtml(driver)));
+            renderTarget.appendChild(container);
+            renderTarget.appendChild(meta);
+          } else {
+            renderTarget.appendChild(container);
+          }
+
+          // open detailsRow (animate by max-height)
+          detailsRow.style.maxHeight = '500px';
+        } else {
+          // collapse
+          detailsRow.style.maxHeight = '0';
+        }
+      });
+    });
+
+    // mobile toggles for each card
+    document.querySelectorAll('[data-mobile-toggle]').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const card = btn.closest('[class*="bg-white"]');
+        if (!card) return;
+        const mobileDetails = card.querySelector('.mobile-details');
+        if (!mobileDetails) return;
+        mobileDetails.classList.toggle('hidden');
+      });
+    });
+
+    // simple escape helper
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, function (m) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
+    }
+
+  });
+  </script>
+
+</body>
+</html>

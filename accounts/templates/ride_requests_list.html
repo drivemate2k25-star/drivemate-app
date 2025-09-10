@@ -1,0 +1,193 @@
+{% extends 'driver_home.html' %}
+{% load address_filters %}
+{% block title %}DriveMate - Ride Requests{% endblock %}
+
+{% block requests_active %}
+  bg-[var(--accent-color)] text-[var(--primary-color)] font-semibold
+{% endblock %}
+{% block home_active %}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-6">
+  <div class="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Header (stacks on small screens) -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+      <div>
+        <h1 class="text-2xl font-semibold">Incoming Ride Requests</h1>
+        <p class="text-sm text-gray-500 mt-1">Accept rides quickly — stay responsive to customers.</p>
+      </div>
+
+      <div class="flex items-center gap-3 flex-wrap">
+        <a href="{% url 'driver_requests_list' %}"
+           class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border bg-white/80 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[var(--accent-color)] text-sm">
+          <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+          <span class="sr-only sm:not-sr-only">Refresh</span>
+        </a>
+
+        <a href="{% url 'driver_dashboard' %}"
+           class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-black text-white shadow hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-black text-sm">
+          <span class="material-symbols-outlined" aria-hidden="true">home</span>
+          Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+      <div class="space-y-2 mb-4">
+        {% for m in messages %}
+          <div class="rounded-lg p-3 text-sm
+            {% if m.tags == 'error' %} bg-red-50 text-red-700 border border-red-100
+            {% else %} bg-indigo-50 text-indigo-800 border border-indigo-100 {% endif %}">
+            {{ m }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if ride_requests %}
+      <!-- Cards: mobile-first, hidden on md+ so table becomes primary on larger screens -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
+        {% for req in ride_requests %}
+        <div class="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-lg border border-gray-100">
+          <div class="flex flex-col md:flex-row items-start md:items-center gap-3">
+            <div class="flex-shrink-0">
+              <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-black to-gray-800 text-white flex items-center justify-center text-lg font-bold">
+                D
+              </div>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="text-sm text-gray-500">{{ req.requested_at|date:"M d, Y H:i" }}</div>
+                  <h3 class="text-base sm:text-lg font-semibold mt-1 truncate">
+                    <span class="truncate">{{ req.ride.start_location|before_comma }}</span>
+                  </h3>
+                  <span class="text-gray-400 mx-1"> </span>
+                  <h3 class="text-base sm:text-lg font-semibold mt-1 truncate">
+                    <span class="truncate">{{ req.ride.end_location|before_comma }}</span>
+                  </h3>
+                  <div class="text-sm text-gray-500 mt-1">
+                    <span class="inline-flex items-center gap-1 mr-3"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">directions_car</span> {{ req.ride.get_ride_mode_display }}</span>
+                    <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">event</span> {{ req.ride.purpose|default:"—" }}</span>
+                  </div>
+                </div>
+
+                <!-- Status badge -->
+                <div class="text-right flex-shrink-0 ml-2">
+                  {% if req.get_status_display == "Pending" or req.status == req.Status.PENDING %}
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-100">Pending</span>
+                  {% elif req.get_status_display == "Accepted" %}
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">Accepted</span>
+                  {% else %}
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-100">{{ req.get_status_display }}</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Customer -->
+              <div class="mt-3 text-sm text-gray-600">
+                <div class="font-medium truncate">{{ req.ride.customer.name }}</div>
+                <div class="truncate text-xs text-gray-500">{{ req.ride.customer.email }}</div>
+              </div>
+
+              <!-- Actions (stacked on mobile) -->
+              <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:gap-2 gap-2">
+                <a href="{% url 'driver_request_detail' req.pk %}"
+                   class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border bg-white hover:shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[var(--accent-color)]">
+                  <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+                  View
+                </a>
+
+                {% if req.status == req.Status.PENDING %}
+                  {% if has_active_ride %}
+                    <button class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-not-allowed opacity-70" disabled title="You're currently on a trip">
+                      <span class="material-symbols-outlined" aria-hidden="true">schedule</span> Accept (busy)
+                    </button>
+                  {% else %}
+                    <form method="post" action="{% url 'accept_ride_request' req.pk %}" class="w-full sm:w-auto inline">
+                      {% csrf_token %}
+                      <button class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm bg-[var(--accent-color)] text-[var(--primary-color)] shadow hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[var(--accent-color)]" type="submit" onclick="return confirm('Accept this ride? This will cancel other driver requests for this ride.')">
+                        <span class="material-symbols-outlined" aria-hidden="true">check_circle</span> Accept
+                      </button>
+                    </form>
+                  {% endif %}
+                {% else %}
+                  <span class="text-sm text-gray-500 px-2">—</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Table fallback for md+ screens -->
+      <div class="mt-6 overflow-x-auto hidden md:block">
+        <table class="w-full text-left rounded-lg border-collapse bg-white/80 shadow-sm">
+          <thead>
+            <tr class="text-sm text-gray-600 bg-white/90 border-b">
+              <th class="p-3">#</th>
+              <th class="p-3">Ride</th>
+              <th class="p-3">Customer</th>
+              <th class="p-3">Requested at</th>
+              <th class="p-3">Status</th>
+              <th class="p-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in ride_requests %}
+            <tr class="border-b hover:bg-white">
+              <td class="p-3 align-top">{{ req.pk }}</td>
+              <td class="p-3 align-top">
+                <div class="font-medium">{{ req.ride.start_location|before_comma }} </div>
+                <div class="font-medium">{{ req.ride.end_location|before_comma }}</div>
+                <div class="text-xs text-gray-500 mt-1">{{ req.ride.get_ride_mode_display }} • {{ req.ride.purpose|default:"—" }}</div>
+              </td>
+              <td class="p-3 align-top">
+                {{ req.ride.customer.name }}<br>
+                <small class="text-xs text-gray-500">{{ req.ride.customer.email }}</small>
+              </td>
+              <td class="p-3 align-top">{{ req.requested_at|date:"M d, Y H:i" }}</td>
+              <td class="p-3 align-top">
+                {% if req.get_status_display == "Pending" or req.status == req.Status.PENDING %}
+                  <span class="inline-block px-3 py-1 rounded-full text-xs bg-yellow-50 text-yellow-700 border border-yellow-100">Pending</span>
+                {% elif req.get_status_display == "Accepted" %}
+                  <span class="inline-block px-3 py-1 rounded-full text-xs bg-green-50 text-green-700 border border-green-100">Accepted</span>
+                {% else %}
+                  <span class="inline-block px-3 py-1 rounded-full text-xs bg-gray-50 text-gray-700 border border-gray-100">{{ req.get_status_display }}</span>
+                {% endif %}
+              </td>
+              <td class="p-3 align-top">
+                <div class="flex items-center gap-2">
+                  <a class="inline-flex items-center gap-2 px-3 py-1 rounded border text-sm" href="{% url 'driver_request_detail' req.pk %}">
+                    <span class="material-symbols-outlined" aria-hidden="true">visibility</span> View
+                  </a>
+                  {% if req.status == req.Status.PENDING %}
+                    {% if has_active_ride %}
+                      <button class="inline-flex items-center gap-2 px-3 py-1 rounded border text-sm cursor-not-allowed opacity-70" disabled>Accept (busy)</button>
+                    {% else %}
+                      <form method="post" action="{% url 'accept_ride_request' req.pk %}" style="display:inline">
+                        {% csrf_token %}
+                        <button class="inline-flex items-center gap-2 px-3 py-1 rounded bg-[var(--accent-color)] text-[var(--primary-color)] text-sm" type="submit" onclick="return confirm('Accept this ride? This will cancel other driver requests for this ride.')">Accept</button>
+                      </form>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    {% else %}
+      <div class="rounded-2xl p-6 bg-white/80 shadow border border-gray-100 text-center">
+        <p class="text-gray-600">No ride requests at the moment. You're free for now — enjoy the break 🚗</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

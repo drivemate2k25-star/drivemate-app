@@ -1,0 +1,349 @@
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Driver Registration — Professional UI</title>
+    <script src="/static/js/tailwind.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <style>
+      :root{--accent:#3d99f5;--muted:#6b7280}
+      html,body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
+      /* tiny utility to visually hide but keep accessible */
+      .sr-only{position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap}
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen flex items-center justify-center p-6">
+    
+    <div class="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+  
+      <!-- Left visual panel -->
+      <aside class="lg:col-span-5 bg-gradient-to-b from-[#f0fdfa] to-white p-10 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow">
+              <span class="material-symbols-outlined text-3xl text-[var(--primary-color)]">directions_car</span>
+            </div>
+            <div>
+              <h1 class="text-lg font-semibold text-gray-800">DriveMate</h1>
+              <p class="text-sm text-gray-500">Driver onboarding portal</p>
+            </div>
+          </div>
+  
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">Become a Trusted Driver</h2>
+          <p class="text-gray-600 mb-6">Fast verification, secure uploads and clear instructions. Complete your registration in a few simple steps.</p>
+  
+          <ul class="space-y-3 text-sm">
+            <li class="flex items-start gap-3">
+              <div class="flex-shrink-0 bg-white p-2 rounded-md shadow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12l3 3L19 4" stroke="#059669" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div>
+                <div class="font-medium text-gray-800">Fast approvals</div>
+                <div class="text-gray-500">Documents verified within 48 hours</div>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <div class="flex-shrink-0 bg-white p-2 rounded-md shadow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2v6" stroke="#0ea5a3" stroke-width="1.6" stroke-linecap="round"/><path d="M12 16v6" stroke="#0ea5a3" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </div>
+              <div>
+                <div class="font-medium text-gray-800">Secure uploads</div>
+                <div class="text-gray-500">Encrypted storage for sensitive files</div>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <div class="flex-shrink-0 bg-white p-2 rounded-md shadow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 12h18" stroke="#0ea5a3" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </div>
+              <div>
+                <div class="font-medium text-gray-800">Transparent rates</div>
+                <div class="text-gray-500">Set your per km & per min rates</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+  
+        <div class="mt-6 text-sm text-gray-500">
+          <div>Need help? <a href="#" class="text-blue-600 underline">Contact support</a></div>
+        </div>
+      </aside>
+  
+      <!-- Right form panel -->
+      <main class="lg:col-span-7 p-8 md:p-10">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold text-gray-800">Driver Registration</h3>
+          <div class="text-sm text-gray-500">Step <strong class="text-gray-800">1</strong> of 1</div>
+        </div>
+  
+        <form id="driver_form" method="post" enctype="multipart/form-data" class="space-y-6">
+          {% csrf_token %}
+  
+          <!-- Personal grid -->
+          <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Full name <span class="text-red-500">*</span></label>
+              <input type="text" name="name" required placeholder="John Doe" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+            </div>
+  
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Email <span class="text-red-500">*</span></label>
+              <input type="email" name="email" required placeholder="you@domain.com" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+            </div>
+  
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Phone <span class="text-red-500">*</span></label>
+              <input type="tel" name="phone" required placeholder="+91 98765 43210" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+            </div>
+  
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Password <span class="text-red-500">*</span></label>
+              <input type="password" name="password" required placeholder="Create a strong password" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+            </div>
+  
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Gender</label>
+              <select name="gender" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                <option value="">Prefer not to say</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+  
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Experience (years)</label>
+              <input type="number" name="experience_years" min="0" placeholder="2" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+            </div>
+          </section>
+  
+          <!-- Document uploads -->
+          <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Profile picture</label>
+              <div class="mt-2 flex items-center gap-3">
+                <div id="profile_preview" class="w-20 h-20 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
+                  <span class="text-sm text-gray-400">No photo</span>
+                </div>
+                <div class="flex-1">
+                  <label class="block text-xs text-gray-500">JPEG or PNG — max 5MB</label>
+                  <input type="file" name="profile_pic" accept="image/*" id="profile_input" class="mt-1 block w-full text-sm text-gray-600" />
+                </div>
+              </div>
+            </div>
+  
+            <div>
+              <label class="block text-sm font-medium text-gray-700">ID proof (image or PDF) <span class="text-red-500">*</span></label>
+              <div class="mt-2 flex items-start gap-3">
+                <div id="id_preview" class="w-20 h-20 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs text-center px-1">
+                  <span class="text-gray-400">No file</span>
+                </div>
+                <div class="flex-1">
+                  <label class="block text-xs text-gray-500">Upload scanned license or ID (PDF or image)</label>
+                  <input type="file" name="id_proof" accept="image/*,application/pdf" id="id_input" class="mt-1 block w-full text-sm text-gray-600" />
+                  <div id="id_actions" class="mt-2 hidden">
+                    <button type="button" id="open_id" class="text-blue-600 text-sm underline">Open</button>
+                    <button type="button" id="download_id" class="ml-3 text-sm text-gray-600 underline">Download</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+  
+          <!-- Driver specific -->
+          <section class="border-t pt-4">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-md font-semibold text-gray-800">Driver & Vehicle</h4>
+              <label class="flex items-center gap-2 text-sm text-gray-600">
+                <input type="checkbox" id="with_car" name="with_car" class="h-4 w-4 text-blue-600" />
+                <span>Register with vehicle</span>
+              </label>
+            </div>
+  
+            <div id="car_fields" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+              <select name="vehicle_type" data-car-required="true" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                <option value="">Vehicle type</option>
+                <option value="hatchback">Hatchback</option>
+                <option value="sedan">Sedan</option>
+                <option value="suv">SUV</option>
+                <option value="muv">MUV</option>
+                <option value="lcv">LCV</option>
+                <option value="luxury">Luxury</option>
+                <option value="van">Van</option>
+              </select>
+  
+              <input type="text" name="make" placeholder="Make (e.g. Toyota)" data-car-required="true" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+  
+              <input type="text" name="model" placeholder="Model (e.g. Innova)" data-car-required="true" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+  
+              <input type="number" name="year" placeholder="Year" min="1900" max="2100" data-car-required="true" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+  
+              <input type="text" name="registration_number" placeholder="Registration no." data-car-required="true" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+  
+              <input type="number" name="seat_capacity" placeholder="Seats" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+  
+              <select name="transmission" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                <option value="manual">Manual</option>
+                <option value="automatic">Automatic</option>
+              </select>
+  
+              <select name="fuel_type" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                <option value="petrol">Petrol</option>
+                <option value="diesel">Diesel</option>
+                <option value="cng">CNG</option>
+                <option value="electric">Electric</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
+  
+              <input type="number" step="0.01" name="per_km_rate" placeholder="Per km rate" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+  
+              <input type="number" step="0.01" name="per_min_rate" placeholder="Per min rate" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+  
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700">Vehicle images</label>
+                <input type="file" id="vehicle_images_input" name="vehicle_images" accept="image/*" multiple class="mt-2 text-sm text-gray-600" />
+                <div id="vehicle_images_preview" class="mt-3 grid grid-cols-3 gap-3"></div>
+              </div>
+            </div>
+          </section>
+  
+          <!-- form actions -->
+          <div class="flex items-center justify-between pt-4">
+            <div class="text-sm text-gray-500">By registering you agree to our <a href="#" class="text-blue-600 underline">Terms</a></div>
+            <div class="flex items-center gap-3">
+              <button type="button" class="px-4 py-2 rounded-md border border-gray-200 text-sm text-gray-700 hover:bg-gray-50">Save draft</button>
+              <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow">Finish & Register</button>
+            </div>
+          </div>
+        </form>
+  
+      </main>
+    </div>
+  
+    <!-- PDF modal (native dialog) -->
+    <dialog id="pdfModal" class="w-full max-w-3xl rounded-lg p-0 border-0 bg-transparent">
+      <div class="bg-white rounded-lg overflow-hidden shadow-xl">
+        <div class="flex items-center justify-between px-4 py-2 border-b">
+          <div class="text-sm font-medium">Preview document</div>
+          <button id="closeModal" class="text-gray-500 px-2 py-1">Close</button>
+        </div>
+        <div class="w-full h-[70vh]">
+          <iframe id="pdfFrame" src="" class="w-full h-full" title="pdf preview"></iframe>
+        </div>
+      </div>
+    </dialog>
+  
+    <script>
+      // toggle car fields and required attributes
+      function toggleCarFields() {
+        const check = document.getElementById('with_car').checked;
+        const carBlock = document.getElementById('car_fields');
+        carBlock.classList.toggle('hidden', !check);
+  
+        const required = carBlock.querySelectorAll('[data-car-required="true"]');
+        required.forEach(f => {
+          if (check) f.setAttribute('required', 'required'); else f.removeAttribute('required');
+        });
+      }
+  
+      // image preview helpers
+      function readImage(file) {
+        return new Promise((res, rej) => {
+          const fr = new FileReader();
+          fr.onload = () => res(fr.result);
+          fr.onerror = rej;
+          fr.readAsDataURL(file);
+        });
+      }
+  
+      document.addEventListener('DOMContentLoaded', () => {
+        // initial toggle
+        document.getElementById('with_car').addEventListener('change', toggleCarFields);
+        toggleCarFields();
+  
+        // profile preview
+        const profileInput = document.getElementById('profile_input');
+        const profilePreview = document.getElementById('profile_preview');
+        profileInput.addEventListener('change', async (e) => {
+          const f = e.target.files[0];
+          if (!f) { profilePreview.innerHTML = '<span class="text-sm text-gray-400">No photo</span>'; return; }
+          if (!f.type.startsWith('image/')) return;
+          profilePreview.innerHTML = '';
+          const src = await readImage(f);
+          const img = document.createElement('img'); img.src = src; img.className = 'w-full h-full object-cover';
+          profilePreview.appendChild(img);
+        });
+  
+        // id proof preview + actions
+        const idInput = document.getElementById('id_input');
+        const idPreview = document.getElementById('id_preview');
+        const idActions = document.getElementById('id_actions');
+        const openBtn = document.getElementById('open_id');
+        const downloadBtn = document.getElementById('download_id');
+        let currentIdUrl = '';
+  
+        idInput.addEventListener('change', async (e) => {
+          const f = e.target.files[0];
+          if (!f) { idPreview.innerHTML = '<span class="text-gray-400">No file</span>'; idActions.classList.add('hidden'); return; }
+          // if image — show thumbnail
+          if (f.type.startsWith('image/')) {
+            const src = await readImage(f);
+            idPreview.innerHTML = '';
+            const img = document.createElement('img'); img.src = src; img.className = 'w-full h-full object-cover';
+            idPreview.appendChild(img);
+            currentIdUrl = src; // data url
+            idActions.classList.remove('hidden');
+            openBtn.onclick = () => window.open(src, '_blank');
+            downloadBtn.onclick = () => { const a = document.createElement('a'); a.href = src; a.download = f.name; a.click(); };
+          } else {
+            // for PDFs just show icon & open in modal
+            idPreview.innerHTML = '<div class="flex items-center justify-center w-full h-full text-sm text-gray-500">PDF</div>';
+            currentIdUrl = URL.createObjectURL(f);
+            idActions.classList.remove('hidden');
+            openBtn.onclick = () => {
+              const modal = document.getElementById('pdfModal');
+              document.getElementById('pdfFrame').src = currentIdUrl;
+              modal.showModal();
+            };
+            downloadBtn.onclick = () => { const a = document.createElement('a'); a.href = currentIdUrl; a.download = f.name; a.click(); };
+          }
+        });
+  
+        document.getElementById('closeModal').addEventListener('click', () => {
+          const modal = document.getElementById('pdfModal');
+          document.getElementById('pdfFrame').src = '';
+          modal.close();
+        });
+  
+        // vehicle images preview
+        const vehicleInput = document.getElementById('vehicle_images_input');
+        const vehiclePreview = document.getElementById('vehicle_images_preview');
+        if (vehicleInput) {
+          vehicleInput.addEventListener('change', async (e) => {
+            vehiclePreview.innerHTML = '';
+            const files = Array.from(e.target.files || []);
+            for (let idx=0; idx<files.length; idx++) {
+              const f = files[idx];
+              if (!f.type.startsWith('image/')) continue;
+              const src = await readImage(f);
+              const card = document.createElement('div');
+              card.className = 'rounded-lg overflow-hidden border border-gray-200 relative';
+              card.style.minHeight = '72px';
+              card.innerHTML = `\n              <img src="${src}" class="w-full h-28 object-cover">\n              <div class=\"p-2 flex items-center justify-between\">\n                <label class=\"text-sm text-gray-700\"><input type=\"radio\" name=\"primary_image_index\" value=\"${idx}\" ${idx===0? 'checked': ''}/> Primary</label>\n                <button type=\"button\" class=\"text-xs text-red-600\">Remove</button>\n              </div>`;
+              vehiclePreview.appendChild(card);
+            }
+          });
+        }
+  
+        // ensure car inputs enabled before submit
+        document.getElementById('driver_form').addEventListener('submit', () => {
+          const carInputs = document.querySelectorAll('#car_fields input, #car_fields select, #car_fields textarea');
+          carInputs.forEach(i => i.removeAttribute('disabled'));
+        });
+      });
+    </script>
+  </body>
+  </html>

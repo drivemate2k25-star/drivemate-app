@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>3D Auto Viewer — Performance Focused (Optimized)</title>
+  <style>
+    :root { --bg1:#f7fafc; --bg2:#eef2f7; }
+    html,body { height:100%; margin:0; background: linear-gradient(180deg,var(--bg1),var(--bg2)); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
+    /* Viewer container: you can resize this div in your CSS to reduce GPU work */
+    #viewer {
+      width: 300px;      /* edit this to make viewer smaller */
+      height: 300px;    /* edit this too if desired */
+      position: relative;
+      overflow: hidden;
+      background: white;
+      border-radius: 0;
+    }
+    #viewer canvas { display:block; width:100%; height:100%; touch-action: pan-y pinch-zoom; will-change: transform; }
+    #loader {
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      background:rgba(255,255,255,0.85); z-index:20; transition:opacity .25s ease;
+    }
+    #loader.hidden{ opacity:0; pointer-events:none; }
+    .loader-card { background:white; padding:18px 22px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.08); text-align:center; font-size:14px; color:#111827; }
+    .progress { height:6px; background:#e6e6e6; border-radius:999px; overflow:hidden; margin-top:10px; }
+    .progress > div { height:100%; width:0%; border-radius:999px; background:linear-gradient(90deg,#2563eb,#7c3aed); transition:width .12s linear; }
+    .brand { position:absolute; left:12px; top:12px; z-index:10; font-weight:600; color:#111827; background:rgba(255,255,255,0.7); padding:6px 10px; border-radius:8px; backdrop-filter: blur(6px); font-family:Inter,system-ui; font-size:13px; }
+    .hint { position:absolute; bottom:14px; left:50%; transform:translateX(-50%); z-index:10; background:rgba(0,0,0,0.6); color:#fff; font-size:12px; padding:6px 10px; border-radius:999px; }
+  </style>
+</head>
+<body>
+  <div id="viewer" aria-label="3D viewer container">
+    <div class="brand">Premium 3D Preview</div>
+    <canvas id="c" aria-label="3D viewer"></canvas>
+
+    <div id="loader" aria-hidden="false">
+      <div class="loader-card">
+        Loading model<br>
+        <div class="progress"><div id="progressbar"></div></div>
+        <div id="progresslabel" style="margin-top:8px; font-size:12px; color:#6b7280;">0%</div>
+      </div>
+    </div>
+
+    <div class="hint" id="touch-hint" style="display:none">Drag left / right to rotate</div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+        "three/": "https://cdn.jsdelivr.net/npm/three@0.152.2/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/loaders/GLTFLoader.js';
+    import { MeshoptDecoder } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/libs/meshopt_decoder.module.js';
+    import { DRACOLoader } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/loaders/DRACOLoader.js';
+
+    // === USER-CHANGEABLE SETTINGS ===
+    const MODEL_URL = '/static/output.glb'; // <-- replace with your model path or URL
+    const AUTO_ROTATE_SPEED = 0.4;
+    const AUTO_ROTATE_DIRECTION = 0;
+    const AUTO_RESUME_DELAY = 1800;
+    const SHOW_AXES = false;
+    const MIN_RENDER_SCALE = 2.0;  // lower bounds when adapting for perf
+    const MAX_RENDER_SCALE = 4.0;  // max backing buffer scale (1.0 = full size)
+    const HIGH_QUALITY_PIXELRATIO_CAP = 10.5; // cap when boosting quality
+    // ================================
+
+    // Elements
+    const container = document.getElementById('viewer');
+    const canvas = document.getElementById('c');
+    const loaderEl = document.getElementById('loader');
+    const progressBar = document.getElementById('progressbar');
+    const progressLabel = document.getElementById('progresslabel');
+    const touchHint = document.getElementById('touch-hint');
+
+    canvas.style.touchAction = 'pan-y pinch-zoom';
+
+    // --- renderer & scene setup ---
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: false,
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
+
+    // We'll use backing-buffer scaling (renderScale) instead of devicePixelRatio for predictable perf.
+    renderer.setPixelRatio(1);
+    renderer.autoClear = true;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf7fafc);
+
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 2000);
+    camera.position.set(0, 1.2, 3.5);
+
+    // modest lights for balanced perf
+    const ambient = new THREE.HemisphereLight(0xffffff, 0x888888, 0.9);
+    scene.add(ambient);
+    const key = new THREE.DirectionalLight(0xffffff, 0.6);
+    key.position.set(4, 6, 4);
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0xcfe8ff, 0.25);
+    rim.position.set(-6, 4, -6);
+    scene.add(rim);
+
+    const pivot = new THREE.Group();
+    pivot.position.set(0, 0, 0);
+    scene.add(pivot);
+    if (SHOW_AXES) pivot.add(new THREE.AxesHelper(1.5));
+
+    // --- state ---
+    let car = null;
+    let mixer = null;
+    let isLoaded = false;
+
+    let autoRotate = true;
+    let autoDir = AUTO_ROTATE_DIRECTION;
+    let autoSpeed = AUTO_ROTATE_SPEED;
+
+    // Interaction state
+    let pointerDown = false;
+    let startX = 0;
+    let startRotation = 0;
+    let lastInteraction = performance.now();
+    let isInteracting = false;
+
+    // Throttled pointermove
+    let latestPointerX = null;
+    let pointerMoveScheduled = false;
+    const pointerSensitivity = 0.0065;
+
+    function schedulePointerUpdate() {
+      if (pointerMoveScheduled) return;
+      pointerMoveScheduled = true;
+      requestAnimationFrame(() => {
+        pointerMoveScheduled = false;
+        if (latestPointerX == null || !pointerDown) return;
+        const dx = latestPointerX - startX;
+        pivot.rotation.y = startRotation + dx * pointerSensitivity;
+      });
+    }
+
+    function onCanvasPointerDown(e) {
+      pointerDown = true;
+      isInteracting = true;
+      startX = (e.touches ? e.touches[0].clientX : e.clientX);
+      startRotation = pivot.rotation.y;
+      lastInteraction = performance.now();
+      if (e.touches) e.preventDefault?.();
+      boostQualityTemporarily(); // make interaction crisp
+    }
+
+    function onCanvasPointerMove(e) {
+      if (!pointerDown) return;
+      latestPointerX = (e.touches ? e.touches[0].clientX : e.clientX);
+      lastInteraction = performance.now();
+      schedulePointerUpdate();
+    }
+
+    function onCanvasPointerUp() {
+      pointerDown = false;
+      lastInteraction = performance.now();
+      latestPointerX = null;
+      setTimeout(() => { isInteracting = false; }, 120);
+      boostQualityTemporarily(); // boost on release so final frame is crisp
+    }
+
+    function onWheel(e) {
+      const delta = e.deltaY || e.wheelDelta;
+      pivot.rotation.y += delta * 0.002;
+      lastInteraction = performance.now();
+      e.preventDefault();
+      boostQualityTemporarily();
+    }
+
+    canvas.addEventListener('pointerdown', onCanvasPointerDown, { passive: true });
+    canvas.addEventListener('pointermove', onCanvasPointerMove, { passive: true });
+    window.addEventListener('pointerup', onCanvasPointerUp, { passive: true });
+    window.addEventListener('pointercancel', onCanvasPointerUp, { passive: true });
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+
+    // loader
+    const loader = new GLTFLoader();
+    if (typeof MeshoptDecoder !== 'undefined') loader.setMeshoptDecoder(MeshoptDecoder);
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    loader.setDRACOLoader(dracoLoader);
+
+    loader.load(MODEL_URL,
+      (gltf) => {
+        if (car) { pivot.remove(car); disposeObject(car); car = null; }
+        car = gltf.scene || gltf.scenes[0];
+
+        // scale & center
+        const box = new THREE.Box3().setFromObject(car);
+        const size = box.getSize(new THREE.Vector3()).length();
+        const desiredSize = 2.2;
+        const scale = desiredSize / Math.max(size, 0.0001);
+        car.scale.setScalar(scale);
+
+        box.setFromObject(car);
+        const center = box.getCenter(new THREE.Vector3());
+        car.position.x -= center.x;
+        car.position.y -= center.y;
+        car.position.z -= center.z;
+
+        pivot.add(car);
+
+        // frame camera
+        const sphere = box.getBoundingSphere(new THREE.Sphere());
+        const radius = sphere.radius;
+        const camDist = Math.max(1.8, radius * 2.5);
+        camera.position.set(camDist * 0.6, radius * 0.6, camDist * 0.9);
+        camera.lookAt(0, 0, 0);
+        camera.updateProjectionMatrix();
+
+        // animations
+        if (gltf.animations && gltf.animations.length) {
+          mixer = new THREE.AnimationMixer(car);
+          gltf.animations.forEach((clip) => mixer.clipAction(clip).play());
+        }
+
+        // improve texture sampling for crispness (anisotropy, mipmaps, encoding)
+        (function improveTextures() {
+          let maxAniso = 1;
+          try {
+            // some three builds expose renderer.capabilities.getMaxAnisotropy()
+            maxAniso = typeof renderer.capabilities.getMaxAnisotropy === 'function'
+              ? renderer.capabilities.getMaxAnisotropy()
+              : (renderer.capabilities.maxAnisotropy || 1);
+          } catch (e) { maxAniso = 1; }
+
+          car.traverse((o) => {
+            if (!o.isMesh) return;
+            const mats = Array.isArray(o.material) ? o.material : [o.material];
+            mats.forEach((mat) => {
+              if (!mat) return;
+              ['map','emissiveMap','aoMap','lightMap','metalnessMap','roughnessMap','normalMap','alphaMap','envMap'].forEach((slot) => {
+                const tex = mat[slot];
+                if (tex && tex.isTexture) {
+                  // color textures -> sRGB
+                  if (slot === 'map' || slot === 'emissiveMap' || slot === 'lightMap') {
+                    if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding;
+                  } else {
+                    if ('encoding' in tex) tex.encoding = THREE.LinearEncoding;
+                  }
+                  tex.anisotropy = Math.max(1, maxAniso);
+                  tex.generateMipmaps = true;
+                  tex.minFilter = THREE.LinearMipmapLinearFilter;
+                  tex.magFilter = THREE.LinearFilter;
+                  tex.needsUpdate = true;
+                }
+              });
+              mat.needsUpdate = true;
+            });
+          });
+        })();
+
+        // warm up shaders to avoid first-interaction jank
+        try { renderer.compile(scene, camera); } catch (e) { /* ignore */ }
+
+        isLoaded = true;
+        setTimeout(() => {
+          loaderEl.classList.add('hidden');
+          loaderEl.setAttribute('aria-hidden', 'true');
+        }, 220);
+
+        if ('ontouchstart' in window && window.innerWidth <= 640) {
+          touchHint.style.display = 'block';
+          setTimeout(() => touchHint.style.display = 'none', 3500);
+        }
+      },
+      (progress) => {
+        if (progress.lengthComputable) {
+          const pct = Math.round((progress.loaded / progress.total) * 100);
+          progressBar.style.width = pct + '%';
+          progressLabel.textContent = pct + '%';
+        } else {
+          progressBar.style.width = '60%';
+          progressLabel.textContent = '...';
+        }
+      },
+      (err) => {
+        console.error('Load error', err);
+        progressLabel.textContent = 'Failed to load';
+      }
+    );
+
+    // --- adaptive render scale & sizing (backing buffer scaling) ---
+    let renderScale = MAX_RENDER_SCALE; // dynamic backing buffer scale (0.6..1)
+    let lastFrameTime = performance.now();
+    let paused = false;
+
+    // Update renderer size based on container and renderScale
+    function updateRendererSize() {
+      const rect = container.getBoundingClientRect();
+      const cssW = Math.max(1, Math.floor(rect.width));
+      const cssH = Math.max(1, Math.floor(rect.height));
+
+      // pause if container tiny
+      if (cssW < 120 || cssH < 120) {
+        paused = true;
+        return;
+      } else {
+        paused = false;
+      }
+
+      canvas.style.width = cssW + 'px';
+      canvas.style.height = cssH + 'px';
+
+      const w = Math.max(1, Math.floor(cssW * renderScale));
+      const h = Math.max(1, Math.floor(cssH * renderScale));
+      camera.aspect = cssW / cssH;
+      camera.updateProjectionMatrix();
+
+      // setSize(..., false) changes drawing buffer size only
+      renderer.setSize(w, h, false);
+    }
+    updateRendererSize();
+
+    // ResizeObserver so you can change #viewer in CSS and renderer adapts
+    const ro = new ResizeObserver(() => updateRendererSize());
+    ro.observe(container);
+
+    // Pause if the container not visible (small intersection)
+    let containerVisible = true;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        containerVisible = e.isIntersecting && e.intersectionRatio > 0;
+        if (!containerVisible) paused = true;
+        else paused = false;
+      });
+    }, { threshold: 0.01 });
+    io.observe(container);
+
+    // FPS adaptation
+    const fpsSamples = [];
+    const FPS_WINDOW = 30;
+    function trackAndAdaptFPS(dt) {
+      const fps = dt > 0 ? (1 / dt) * 1.0 : 60;
+      fpsSamples.push(fps);
+      if (fpsSamples.length > FPS_WINDOW) fpsSamples.shift();
+      const avgFps = fpsSamples.reduce((a,b) => a+b, 0) / fpsSamples.length;
+
+      if (avgFps < 35 && renderScale > MIN_RENDER_SCALE) {
+        renderScale = Math.max(MIN_RENDER_SCALE, renderScale - 0.05);
+        updateRendererSize();
+      } else if (avgFps > 50 && renderScale < MAX_RENDER_SCALE) {
+        renderScale = Math.min(MAX_RENDER_SCALE, renderScale + 0.05);
+        updateRendererSize();
+      }
+    }
+
+    // Dynamic throttling target FPS
+    function getTargetFPS() {
+      if (pointerDown || isInteracting) return 60;
+      if (mixer) return 60;
+      if (autoRotate) return 60;
+      return 12;
+    }
+
+    function animate(now) {
+      if (paused || document.hidden) {
+        lastFrameTime = now;
+        return;
+      }
+
+      requestAnimationFrame(animate);
+
+      const targetFPS = getTargetFPS();
+      const minFrameInterval = 1000 / targetFPS;
+      const elapsed = now - lastFrameTime;
+      if (elapsed < minFrameInterval) return;
+
+      const dt = Math.min(0.1, elapsed / 1000);
+      lastFrameTime = now;
+
+      if (!isInteracting && (performance.now() - lastInteraction) > AUTO_RESUME_DELAY) {
+        autoRotate = true;
+      }
+
+      if (autoRotate && !pointerDown && car) pivot.rotation.y += autoDir * autoSpeed * dt;
+      if (mixer) mixer.update(dt);
+
+      trackAndAdaptFPS(dt);
+
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(animate);
+
+    // --- quality boost while interacting (temporary) ---
+    let _savedRenderScale = renderScale;
+    let _savedPixelRatio = renderer.getPixelRatio ? renderer.getPixelRatio() : 1;
+    const HIGH_QUALITY_SCALE = 1.0;
+    const HIGH_QUALITY_PIXELRATIO = Math.min(window.devicePixelRatio || 1, HIGH_QUALITY_PIXELRATIO_CAP);
+    let qualityTimeout = null;
+
+    function boostQualityTemporarily() {
+      // clear pending restore
+      if (qualityTimeout) { clearTimeout(qualityTimeout); qualityTimeout = null; }
+
+      // save current
+      _savedRenderScale = renderScale;
+      _savedPixelRatio = renderer.getPixelRatio ? renderer.getPixelRatio() : 1;
+
+      // set high quality (full backing buffer + increased dpr capped)
+      renderScale = HIGH_QUALITY_SCALE;
+      try { renderer.setPixelRatio(HIGH_QUALITY_PIXELRATIO); } catch (e) {}
+      updateRendererSize();
+
+      // restore after short idle
+      qualityTimeout = setTimeout(() => {
+        renderScale = _savedRenderScale;
+        try { renderer.setPixelRatio(_savedPixelRatio); } catch (e) {}
+        updateRendererSize();
+        qualityTimeout = null;
+      }, 900); // 900ms after last boost
+    }
+
+    // Hook existing userInteracted helper to call boostQualityTemporarily
+    function userInteracted() {
+      autoRotate = false;
+      lastInteraction = performance.now();
+      isInteracting = true;
+      boostQualityTemporarily();
+      setTimeout(() => { isInteracting = false; }, 180);
+    }
+    canvas.addEventListener('pointerdown', userInteracted, { passive: true });
+    canvas.addEventListener('wheel', userInteracted, { passive: true });
+
+    // Pause/resume when tab visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        lastFrameTime = performance.now();
+        requestAnimationFrame(animate);
+      }
+    }, { passive: true });
+
+    // disposal
+    function disposeObject(obj) {
+      obj.traverse((c) => {
+        if (c.isMesh) {
+          if (c.geometry) c.geometry.dispose();
+          if (c.material) {
+            if (Array.isArray(c.material)) c.material.forEach(m => { if (m.map) m.map.dispose(); m.dispose(); });
+            else { if (c.material.map) c.material.map.dispose(); c.material.dispose(); }
+          }
+        }
+      });
+    }
+
+    window.addEventListener('beforeunload', () => {
+      if (car) disposeObject(car);
+      renderer.dispose();
+    }, { passive: true });
+
+    // Minimal external API
+    window.__viewer = {
+      setAutoRotate(v) { autoRotate = !!v; lastInteraction = performance.now(); },
+      setAutoDirection(d) { autoDir = d >= 0 ? 1 : -1; },
+      setSpeed(s) { autoSpeed = Math.max(0, +s); },
+      // allow forcing render scale if you want
+      setRenderScale(s) { renderScale = Math.max(MIN_RENDER_SCALE, Math.min(MAX_RENDER_SCALE, +s)); updateRendererSize(); }
+    };
+  </script>
+</body>
+</html>

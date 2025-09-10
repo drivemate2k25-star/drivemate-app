@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Customer Registration — Professional UI</title>
+  <script src="/static/js/tailwind.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+  <style>
+    html,body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden grid grid-cols-1 md:grid-cols-12">
+
+    <!-- Left illustration / marketing -->
+    <aside class="md:col-span-5 bg-gradient-to-b from-white to-blue-50 p-8 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow">
+            <span class="material-symbols-outlined text-3xl text-[var(--primary-color)]">directions_car</span>
+          </div>
+          <div>
+            <h1 class="text-lg font-semibold text-gray-800">DriveMate</h1>
+            <p class="text-sm text-gray-500">Customer onboarding</p>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Sign up and ride with confidence</h2>
+        <p class="text-gray-600 mb-6">Create your account to book rides, save payment methods and track trips. Quick signup — secure and private.</p>
+
+        <ul class="space-y-3 text-sm">
+          <li class="flex items-start gap-3">
+            <div class="flex-shrink-0 bg-white p-2 rounded-md shadow">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12l3 3L19 4" stroke="#059669" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <div class="font-medium text-gray-800">Fast bookings</div>
+              <div class="text-gray-500">Request rides in seconds</div>
+            </div>
+          </li>
+          <li class="flex items-start gap-3">
+            <div class="flex-shrink-0 bg-white p-2 rounded-md shadow">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2v6" stroke="#059669" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <div class="font-medium text-gray-800">Secure payments</div>
+              <div class="text-gray-500">Multiple payment options</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="text-xs text-gray-500">Already have an account? <a href="{% url 'login'%}" class="text-blue-600 underline">Sign in</a></div>
+    </aside>
+
+    <!-- Right form -->
+    <main class="md:col-span-7 p-8">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-semibold text-gray-800">Customer Registration</h3>
+        <div class="text-sm text-gray-500">Secure • Quick • Private</div>
+      </div>
+
+      <form method="post" class="space-y-6" id="customer_form">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Full name <span class="text-red-500">*</span></label>
+            <input type="text" name="name" required placeholder="Your full name" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Email <span class="text-red-500">*</span></label>
+            <input type="email" name="email" required placeholder="you@example.com" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Phone <span class="text-red-500">*</span></label>
+            <input type="tel" name="phone" required placeholder="+91 98765 43210" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+          </div>
+
+          <div class="relative">
+            <label class="block text-sm font-medium text-gray-700">Password <span class="text-red-500">*</span></label>
+            <input type="password" id="password" name="password" required placeholder="Create a strong password" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 pr-12 focus:ring-2 focus:ring-blue-200 focus:outline-none" />
+            <button type="button" id="togglePassword" class="absolute right-2 top-9 text-sm text-gray-500">Show</button>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Gender</label>
+            <select name="gender" class="mt-1 block w-full rounded-lg border border-gray-200 px-4 py-2 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+              <option value="">Prefer not to say</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- <div class="flex items-center gap-4">
+          <div id="avatar_preview" class="w-20 h-20 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
+            <span class="text-sm text-gray-400">Avatar</span>
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700">Profile picture (optional)</label>
+            <input type="file" id="avatar_input" accept="image/*" class="mt-2 text-sm text-gray-600" />
+            <p class="text-xs text-gray-500 mt-1">JPEG/PNG, max 5MB. Used for driver verification and receipts.</p>
+          </div>
+        </div> -->
+
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-500">By signing up you agree to our <a href="{% url 'terms'%}" class="text-blue-600 underline">Terms</a> </div>
+          <div class="flex items-center gap-3">
+            <button type="button" class="px-4 py-2 rounded-md border border-gray-200 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow">Register</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- small helper -->
+      <p class="mt-4 text-xs text-gray-400">We will never share your personal information. Verification may take up to 24 hours.</p>
+    </main>
+  </div>
+
+  <script>
+    // show/hide password
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.getElementById('togglePassword');
+      const pwd = document.getElementById('password');
+      toggle.addEventListener('click', () => {
+        if (pwd.type === 'password') { pwd.type = 'text'; toggle.textContent = 'Hide'; }
+        else { pwd.type = 'password'; toggle.textContent = 'Show'; }
+      });
+
+      // avatar preview
+      const avatarInput = document.getElementById('avatar_input');
+      const avatarPreview = document.getElementById('avatar_preview');
+      avatarInput.addEventListener('change', (e) => {
+        const f = e.target.files[0];
+        if (!f) { avatarPreview.innerHTML = '<span class="text-sm text-gray-400">Avatar</span>'; return; }
+        if (!f.type.startsWith('image/')) return;
+        const fr = new FileReader();
+        fr.onload = () => {
+          avatarPreview.innerHTML = '';
+          const img = document.createElement('img'); img.src = fr.result; img.className = 'w-full h-full object-cover';
+          avatarPreview.appendChild(img);
+        };
+        fr.readAsDataURL(f);
+      });
+
+      // simple client-side validation (example)
+      document.getElementById('customer_form').addEventListener('submit', (e) => {
+        const pwd = document.getElementById('password').value;
+        if (pwd.length < 6) {
+          e.preventDefault();
+          alert('Password should be at least 6 characters');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

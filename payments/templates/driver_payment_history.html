@@ -1,0 +1,181 @@
+{% extends 'driver_home.html' %}
+
+{% block title %}
+    Payment History
+{% endblock %}
+
+{% block earnings_active %}
+  bg-[var(--accent-color)] text-[var(--primary-color)] font-semibold
+{% endblock %}
+{% block home_active %}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-2xl font-semibold text-[var(--text-primary)] mb-6">Payment History</h2>
+
+  {% if payments %}
+    <div class="space-y-4">
+      {% for payment in payments %}
+        <div class="p-4 rounded-lg bg-gray-50 hover:bg-[var(--secondary-color)] transition-colors shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex-1 min-w-0">
+              <p class="text-lg font-medium text-[var(--text-primary)] truncate">
+                {% if payment.ride and payment.ride.start_location %}
+                  Pickup at {{ payment.ride.start_location }}
+                {% else %}
+                  Pickup location
+                {% endif %}
+              </p>
+              <p class="text-sm text-[var(--text-secondary)]">
+                {# date/time #}
+                {{ payment.created_at|date:"d M Y, g:i A" }}
+                &middot;
+                {# ride id and customer #}
+                Ride #{{ payment.ride_id }}{% if payment.customer %} — {{ payment.customer.name }}{% endif %}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="text-right">
+                <p class="text-lg font-semibold text-[var(--text-primary)]">
+                  {{ payment.currency }} {{ payment.amount }}
+                </p>
+                <p class="text-sm text-[var(--text-secondary)]">
+                  {{ payment.get_method_display }}
+                </p>
+              </div>
+
+              {# Status badge (basic mapping, safe fallback) #}
+              <div>
+                {% if payment.status == "completed" or payment.get_status_display == "Completed" %}
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    {{ payment.get_status_display }}
+                  </span>
+                {% elif payment.status == "pending" or payment.get_status_display == "Pending" %}
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                    {{ payment.get_status_display }}
+                  </span>
+                {% elif payment.status == "refunded" or payment.get_status_display == "Refunded" or payment.refunded_amount|default:0 > 0 %}
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                    {{ payment.get_status_display }}
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-[var(--text-primary)]">
+                    {{ payment.get_status_display }}
+                  </span>
+                {% endif %}
+              </div>
+
+              {# View details toggle #}
+              <button
+                type="button"
+                class="view-details-btn bg-[var(--primary-color)] text-white rounded-lg px-4 py-2 text-sm font-semibold hover:opacity-95 focus:outline-none"
+                data-target="details-{{ forloop.counter }}">
+                View Details
+              </button>
+            </div>
+          </div>
+
+          {# Collapsible details (hidden by default) #}
+          <div id="details-{{ forloop.counter }}" class="mt-4 hidden bg-white border border-gray-100 rounded-lg p-4 text-sm text-[var(--text-secondary)]">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <strong>From:</strong>
+                <span class="block truncate">{{ payment.ride.start_location|default:"N/A" }}</span>
+              </div>
+              <div>
+                <strong>To:</strong>
+                <span class="block truncate">{{ payment.ride.end_location|default:"N/A" }}</span>
+              </div>
+
+              <div>
+                <strong>Distance:</strong>
+                <span>{{ payment.ride.actual_distance_km|default:"N/A" }} km</span>
+              </div>
+              <div>
+                <strong>Duration:</strong>
+                <span>{{ payment.ride.actual_duration_min|default:"N/A" }} min</span>
+              </div>
+
+              <div>
+                <strong>Tip:</strong>
+                <span>
+                  {% if payment.tip_amount and payment.tip_amount > 0 %}
+                    {{ payment.currency }} {{ payment.tip_amount }}
+                  {% else %}
+                    — 
+                  {% endif %}
+                </span>
+              </div>
+              <div>
+                <strong>Discount:</strong>
+                <span>
+                  {% if payment.discount_amount and payment.discount_amount > 0 %}
+                    {{ payment.currency }} {{ payment.discount_amount }}
+                  {% else %}
+                    — 
+                  {% endif %}
+                </span>
+              </div>
+
+              <div>
+                <strong>Refunded:</strong>
+                <span>
+                  {% if payment.refunded_amount and payment.refunded_amount > 0 %}
+                    {{ payment.currency }} {{ payment.refunded_amount }}
+                  {% else %}
+                    — 
+                  {% endif %}
+                </span>
+              </div>
+              <div>
+                <strong>Recorded on:</strong>
+                <span>{{ payment.created_at|date:"d M Y, g:i A" }}</span>
+              </div>
+            </div>
+
+            {# Optional: link to a detailed payment page if you have one; safe fallback to nothing #}
+            <div class="mt-4 flex items-center gap-3">
+              {% if payment.get_absolute_url %}
+                <a href="{{ payment.get_absolute_url }}" class="inline-flex items-center px-4 py-2 rounded-lg bg-white border text-[var(--text-primary)] shadow-sm hover:opacity-95">Open Full Record</a>
+              {% endif %}
+              <button type="button" class="close-details-btn inline-flex items-center px-4 py-2 rounded-lg border bg-white text-[var(--text-primary)] shadow-sm hover:opacity-95" data-target="details-{{ forloop.counter }}">Close</button>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="rounded-2xl p-6 bg-white/80 shadow border border-gray-100 text-center">
+      <p class="text-gray-600">No payment history available for your rides.</p>
+    </div>
+  {% endif %}
+</div>
+
+{# Small JS to toggle details in front-end only (won't affect backend). Minimal and safe. #}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    function toggleDetails(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('hidden');
+      // optionally scroll into view when opening
+      if (!el.classList.contains('hidden')) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    document.querySelectorAll('.view-details-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        toggleDetails(this.dataset.target);
+      });
+    });
+
+    document.querySelectorAll('.close-details-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        toggleDetails(this.dataset.target);
+      });
+    });
+  });
+</script>
+{% endblock %}

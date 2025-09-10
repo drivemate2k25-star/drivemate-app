@@ -1,0 +1,391 @@
+{% extends 'driver_home.html' %}
+
+{% block title %}DriveMate - Ride Request #{{ ride_request.pk }}{% endblock %}
+
+{% block requests_active %}
+  bg-[var(--accent-color)] text-[var(--primary-color)] font-semibold
+{% endblock %}
+{% block home_active %}{% endblock %}
+
+{% block content %}
+
+<style>
+  .leaflet-touch .leaflet-control-attribution{
+    display: none;
+  }
+</style>
+<div  ss="min-h-screen py-6">
+  <div class="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Top card -->
+    <div class="bg-white/90 backdrop-blur rounded-2xl p-4 sm:p-6 shadow-xl border border-gray-100">
+      <!-- Make header stack on small and row on md+ -->
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-start gap-4 w-full md:w-auto min-w-0">
+          <div class="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br from-black to-gray-800 text-white flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0">
+            R
+          </div>
+          <div class="min-w-0">
+            <h2 class="text-lg md:text-xl font-semibold leading-snug truncate">Ride Request #{{ ride_request.pk }}</h2>
+            <div class="text-xs md:text-sm text-gray-500 mt-1 truncate" title="{{ ride_request.requested_at|date:'M d, Y H:i' }} • Requested by {{ ride_request.ride.customer.name }}">
+              {{ ride_request.requested_at|date:"M d, Y H:i" }} &middot; Requested by <span class="font-medium">{{ ride_request.ride.customer.name }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="w-full md:w-auto text-left md:text-right">
+          <div class="text-sm text-gray-600 mb-2">Ride status</div>
+          {% if ride_request.get_status_display == "Pending" %}
+            <span class="inline-block px-3 py-1 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-100 text-sm">Pending</span>
+          {% elif ride_request.get_status_display == "Accepted" %}
+            <span class="inline-block px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-100 text-sm">Accepted</span>
+          {% else %}
+            <span class="inline-block px-3 py-1 rounded-full bg-gray-50 text-gray-700 border border-gray-100 text-sm">{{ ride_request.get_status_display }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <!-- Left: route & map -->
+        <div class="space-y-3">
+          <div class="rounded-lg border border-gray-100 p-3 bg-white">
+            <div class="flex items-start gap-3">
+              <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-md bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined">place</span>
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm text-gray-500">From</div>
+                <div class="font-medium break-words truncate">{{ ride_request.ride.start_location }}</div>
+                <div class="text-xs text-gray-400 mt-1">{{ ride_request.ride.start_latitude }}, {{ ride_request.ride.start_longitude }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-lg border border-gray-100 p-3 bg-white">
+            <div class="flex items-start gap-3">
+              <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-md bg-rose-50 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined">flag</span>
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm text-gray-500">To</div>
+                <div class="font-medium break-words truncate">{{ ride_request.ride.end_location }}</div>
+                <div class="text-xs text-gray-400 mt-1">{{ ride_request.ride.end_latitude }}, {{ ride_request.ride.end_longitude }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Map placeholder / map container: taller on md -->
+          <div class="rounded-lg border border-gray-100 overflow-hidden bg-gray-50 h-48 md:h-64 flex items-center justify-center text-gray-400">
+            <div id="ride-map" class="w-full h-48 md:h-64" 
+                 data-start-lat="{{ ride_request.ride.start_latitude }}" 
+                 data-start-lon="{{ ride_request.ride.start_longitude }}" 
+                 data-start-address="{{ ride_request.ride.start_location|escapejs }}"
+                 data-end-lat="{{ ride_request.ride.end_latitude }}" 
+                 data-end-lon="{{ ride_request.ride.end_longitude }}" 
+                 data-end-address="{{ ride_request.ride.end_location|escapejs }}">
+              <noscript>
+                <div class="px-3 text-center">
+                  <span class="material-symbols-outlined text-4xl">map</span>
+                  <div class="text-sm mt-2">Map preview (enable JavaScript)</div>
+                </div>
+              </noscript>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: details & actions -->
+        <div class="space-y-3">
+          <div class="bg-white rounded-lg border border-gray-100 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="text-sm text-gray-500">Customer</div>
+                <div class="font-medium break-words truncate">{{ ride_request.ride.customer.name }}</div>
+                <div class="text-xs text-gray-500 mt-1 truncate">{{ ride_request.ride.customer.email }}</div>
+              </div>
+              <div class="text-right hidden sm:block">
+                {% if ride_request.ride.vehicle %}
+                  <div class="text-sm text-gray-500">Vehicle</div>
+                  <div class="font-medium">{{ ride_request.ride.vehicle }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+              <div class="break-words"><strong>Mode:</strong> {{ ride_request.ride.get_ride_mode_display }}</div>
+              <div class="break-words"><strong>Purpose:</strong> {{ ride_request.ride.purpose|default:"—" }}</div>
+              <div class="break-words"><strong>Start time:</strong> {{ ride_request.ride.start_time|default:"—" }}</div>
+              <div class="break-words"><strong>Requested at:</strong> {{ ride_request.requested_at|date:"M d, Y H:i" }}</div>
+            </div>
+
+            <div class="mt-3">
+              <div class="text-sm text-gray-500">Notes</div>
+              <div class="text-sm text-gray-700 mt-1 break-words">{{ ride_request.ride.notes|default:"—" }}</div>
+            </div>
+
+            <div class="mt-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
+              <div class="flex items-center gap-2">
+                <div class="text-sm text-gray-500">Distance</div>
+                <div id="ride-distance" class="font-semibold text-gray-800 ml-2">calculating…</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="ml-0 sm:ml-4 text-sm text-gray-500">ETA</div>
+                <div id="ride-duration" class="font-semibold text-gray-800 ml-2">calculating…</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions area -->
+          <div class="bg-white rounded-lg border border-gray-100 p-4">
+            {% if ride_request.status == ride_request.Status.PENDING %}
+              <form method="post" action="{% url 'accept_ride_request' ride_request.pk %}" class="flex flex-col sm:flex-row items-center gap-3">
+                {% csrf_token %}
+                <button class="w-full sm:flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[var(--accent-color)] text-[var(--primary-color)] font-semibold shadow hover:opacity-95" type="submit" onclick="return confirm('Accept this ride? This will cancel other driver requests for this ride.')">
+                  <span class="material-symbols-outlined">check_circle</span> <span class="hidden sm:inline">Accept Ride</span>
+                </button>
+                <a href="{% url 'driver_requests_list' %}" class="w-full sm:w-auto text-center px-4 py-2 rounded-xl border text-sm">Back</a>
+              </form>
+            {% else %}
+              <div class="flex flex-col sm:flex-row items-center gap-3">
+                {% if ride_request.ride.status == 'accepted' %}
+                  <button id="start-ride" class="w-full sm:flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold shadow hover:opacity-95" type="button">
+                    <span class="material-symbols-outlined">play_arrow</span> Start Ride
+                  </button>
+                {% endif %}
+
+                {% if ride_request.ride.status == 'ongoing' and not ride_request.ride.end_time %}
+                  <button id="open-end-form" class="w-full sm:w-auto px-4 py-2 rounded-xl border">End Ride</button>
+                {% endif %}
+
+                <a href="{% url 'driver_requests_list' %}" class="w-full sm:w-auto px-4 py-2 rounded-xl border text-sm text-center">Back</a>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- End ride / payment block -->
+          {% if ride_request.ride.status == 'ongoing' %}
+            <div id="end-ride-block" class="bg-white rounded-lg border border-gray-100 p-4 {% if not ride_request.ride.end_time %}hidden{% endif %}">
+              {% if not ride_request.ride.end_time %}
+                <form id="end-ride-form" class="space-y-3">
+                  {% csrf_token %}
+                  <div>
+                    <label class="block text-sm text-gray-600">Additional Charges (INR)</label>
+                    <input type="number" id="additional_charges" name="additional_charges" value="0" step="0.01" min="0" class="mt-1 w-full px-3 py-2 rounded-lg border" />
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" id="return_trip" name="return_trip" class="w-4 h-4" />
+                    <label for="return_trip" class="text-sm text-gray-600">Return Trip (double cost)</label>
+                  </div>
+                  <div class="flex flex-col sm:flex-row items-center gap-3">
+                    <button type="submit" class="w-full sm:flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-green-600 text-white font-semibold">End Ride & Submit Payment</button>
+                    <button type="button" id="cancel-end" class="w-full sm:w-auto px-4 py-2 rounded-xl border">Cancel</button>
+                  </div>
+                </form>
+              {% else %}
+                <div class="text-sm text-gray-600">Ride ended at <span class="font-medium">{{ ride_request.ride.end_time }}</span></div>
+                <div class="text-lg font-semibold mt-2">Total: {{ ride_request.ride.total_amount }} INR</div>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          {% if payment and payment.status == 'success' %}
+            <div class="bg-white rounded-lg border border-gray-100 p-4">
+              <div class="text-sm text-green-700 font-semibold">Payment Completed</div>
+              <div class="mt-2 text-sm">
+                <div><strong>Amount:</strong> {{ payment.amount }} {{ payment.currency }}</div>
+                <div><strong>Method:</strong> {{ payment.method|title }}</div>
+                <div><strong>Transaction ID:</strong> {{ payment.transaction_id|default:"—" }}</div>
+                <div><strong>Paid On:</strong> {{ payment.paid_at|date:"M d, Y H:i" }}</div>
+                {% if payment.tip_amount > 0 %}<div><strong>Tip:</strong> {{ payment.tip_amount }} {{ payment.currency }}</div>{% endif %}
+                {% if payment.discount_amount > 0 %}<div><strong>Discount:</strong> {{ payment.discount_amount }} {{ payment.currency }}</div>{% endif %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  // Utility to read CSRF token from cookie (safer for fetch)
+  function getCookie(name) {
+    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  // Start ride
+  document.getElementById('start-ride')?.addEventListener('click', function() {
+    fetch(`/ride-requests/${{ ride_request.pk }}/set_ongoing/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrftoken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert(data.error || 'Failed to start ride');
+      }
+    }).catch(e => alert('Error: ' + e.message));
+  });
+
+  // End ride form toggles & submit
+  document.getElementById('open-end-form')?.addEventListener('click', function() {
+    document.getElementById('end-ride-block')?.classList.toggle('hidden');
+  });
+  document.getElementById('cancel-end')?.addEventListener('click', function() {
+    document.getElementById('end-ride-block')?.classList.add('hidden');
+  });
+
+  document.getElementById('end-ride-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    fetch(`/ride-requests/${{ ride_request.pk }}/end_ride/`, {
+      method: 'POST',
+      body: data,
+      headers: { 'X-CSRFToken': csrftoken }
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (res.success) {
+        alert(res.message);
+        location.reload();
+      } else {
+        alert(res.error || 'Could not end ride');
+      }
+    }).catch(err => alert('Error: ' + err.message));
+  });
+
+  // Distance & duration (calls your endpoint) + Map init (with OSRM routing)
+  document.addEventListener('DOMContentLoaded', function () {
+    // --- existing distance/duration fetch (unchanged) ---
+    const elDist = document.getElementById('ride-distance');
+    const elTime = document.getElementById('ride-duration');
+    fetch("{% url 'ride_request_distance' ride_request.pk %}")
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'ok') {
+          elDist.textContent = `${data.distance_km} km`;
+          elTime.textContent = `${data.duration_min} min`;
+        } else {
+          elDist.textContent = '—';
+          elTime.textContent = '—';
+        }
+      })
+      .catch(err => {
+        elDist.textContent = '—';
+        elTime.textContent = '—';
+        console.error(err);
+      });
+
+    // --- Map initialization using Leaflet (OpenStreetMap) with OSRM routing ---
+    try {
+      const mapEl = document.getElementById('ride-map');
+      if (mapEl && typeof L !== 'undefined') {
+        // Read lat/lon from data attributes (rendered by Django)
+        const sLat = parseFloat(mapEl.dataset.startLat || '');
+        const sLon = parseFloat(mapEl.dataset.startLon || '');
+        const eLat = parseFloat(mapEl.dataset.endLat || '');
+        const eLon = parseFloat(mapEl.dataset.endLon || '');
+        const sAddr = mapEl.dataset.startAddress || '';
+        const eAddr = mapEl.dataset.endAddress || '';
+
+        const hasStart = !isNaN(sLat) && !isNaN(sLon);
+        const hasEnd = !isNaN(eLat) && !isNaN(eLon);
+
+        // Initialize only if we have at least one valid coordinate
+        if (hasStart || hasEnd) {
+          // Create map and tile layer
+          const map = L.map('ride-map', { scrollWheelZoom: false });
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          }).addTo(map);
+
+          // Add markers if present
+          let startMarker = null;
+          let endMarker = null;
+          if (hasStart) {
+            startMarker = L.marker([sLat, sLon]).addTo(map);
+            startMarker.bindPopup(`<strong>Start</strong><br>${sAddr || 'Start location'}`);
+          }
+          if (hasEnd) {
+            endMarker = L.marker([eLat, eLon]).addTo(map);
+            endMarker.bindPopup(`<strong>End</strong><br>${eAddr || 'End location'}`);
+          }
+
+          // If we have both coordinates, try to fetch a driving route from OSRM (follows roads).
+          if (hasStart && hasEnd) {
+            // OSRM expects lon,lat order
+            const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${sLon},${sLat};${eLon},${eLat}?overview=full&geometries=geojson&steps=false`;
+
+            fetch(osrmUrl)
+              .then(response => {
+                if (!response.ok) throw new Error('Routing request failed');
+                return response.json();
+              })
+              .then(json => {
+                if (json.code === 'Ok' && json.routes && json.routes.length > 0) {
+                  const route = json.routes[0];
+                  const geojson = route.geometry; // GeoJSON LineString with coordinates as [lon, lat]
+                  // Add route as a GeoJSON layer (Leaflet understands GeoJSON)
+                  const routeLayer = L.geoJSON(geojson, {
+                    style: function () { return { color: '#3366CC', weight: 5, opacity: 0.9 }; }
+                  }).addTo(map);
+
+                  // Fit map to route bounds (if available) or to the two markers
+                  try {
+                    const bounds = routeLayer.getBounds();
+                    if (bounds.isValid && !bounds.isEmpty()) {
+                      map.fitBounds(bounds, { padding: [40, 40] });
+                    } else {
+                      map.fitBounds(L.latLngBounds([[sLat, sLon], [eLat, eLon]]), { padding: [40, 40] });
+                    }
+                  } catch (e) {
+                    map.fitBounds(L.latLngBounds([[sLat, sLon], [eLat, eLon]]), { padding: [40, 40] });
+                  }
+                } else {
+                  // No route returned — fallback to straight line polyline
+                  console.warn('OSRM returned no routes, drawing straight line fallback.');
+                  const pl = L.polyline([[sLat, sLon], [eLat, eLon]], { weight: 4 }).addTo(map);
+                  map.fitBounds(pl.getBounds(), { padding: [40, 40] });
+                }
+              })
+              .catch(err => {
+                console.error('Routing error (OSRM):', err);
+                // On error, fallback to straight line
+                const pl = L.polyline([[sLat, sLon], [eLat, eLon]], { weight: 4 }).addTo(map);
+                map.fitBounds(pl.getBounds(), { padding: [40, 40] });
+              });
+          } else {
+            // Only one coordinate present — center on it
+            const lat = hasStart ? sLat : eLat;
+            const lon = hasStart ? sLon : eLon;
+            map.setView([lat, lon], 13);
+          }
+        } else {
+          // No valid coords – leave the placeholder appearance
+          console.warn('No valid start/end coordinates provided for the map.');
+        }
+      } else {
+        console.warn('Leaflet not loaded or #ride-map not found.');
+      }
+    } catch (mapInitError) {
+      console.error('Map initialization error:', mapInitError);
+    }
+  });
+</script>
+{% endblock %}

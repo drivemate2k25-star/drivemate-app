@@ -1,0 +1,304 @@
+{% extends 'customer_home.html' %}
+{% block title %}
+<title>DriveMate - Payment</title>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-8xl mx-auto px-4 py-8">
+  <h2 class="text-2xl font-extrabold text-black mb-6 text-center">Your Payment History</h2>
+
+  {% if payments %}
+  <div class="space-y-4">
+    <!-- Desktop table -->
+    <div class="hidden md:block overflow-x-auto rounded-2xl border border-gray-300">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="text-xs uppercase tracking-wider">
+          <tr class="bg-white">
+            <th class="px-4 py-3 text-left">Date</th>
+            <th class="px-4 py-3 text-left">Type</th>
+            <th class="px-4 py-3 text-left">Amount</th>
+            <th class="px-4 py-3 text-left">Status</th>
+            <th class="px-4 py-3 text-left">Method</th>
+            <th class="px-4 py-3 text-left">Details</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100 text-sm">
+          {% for payment in payments %}
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-4 py-4 align-top text-gray-800">{{ payment.created_at|date:"d M Y, H:i" }}</td>
+            <td class="px-4 py-4 align-top text-gray-800">
+              {% if payment.ride %}Ride #{{ payment.ride_id }}{% elif payment.subscription %}Subscription #{{ payment.subscription_id }}{% endif %}
+            </td>
+            <td class="px-4 py-4 align-top font-semibold text-gray-900">{{ payment.currency }} {{ payment.amount }}</td>
+            <td class="px-4 py-4 align-top">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-gray-700">
+                {{ payment.get_status_display }}
+              </span>
+            </td>
+            <td class="px-4 py-4 align-top text-gray-800">{{ payment.get_method_display }}</td>
+
+            <!-- DETAILS CELL: we keep machine-readable spans hidden and let JS render nicely -->
+            <td class="px-4 py-4 align-top">
+              <div class="details-cell">
+                <div class="details-data sr-only" aria-hidden="true">
+                  {% if payment.ride %}
+                    <span class="d-from">{{ payment.ride.start_location }}</span>
+                    <span class="d-to">{{ payment.ride.end_location }}</span>
+                    <span class="d-driver">{{ payment.ride.driver.user.name|default:"N/A" }}</span>
+                  {% elif payment.subscription %}
+                    <span class="d-sub">{{ payment.subscription.plan_name|default:"N/A" }}</span>
+                  {% endif %}
+                  <span class="d-tip">{{ payment.tip_amount }}</span>
+                  <span class="d-discount">{{ payment.discount_amount }}</span>
+                  <span class="d-refund">{{ payment.refunded_amount }}</span>
+                </div>
+
+                <!-- JS will fill this -->
+                <div class="details-render"></div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile: card list (more readable on small screens) -->
+    <div class="md:hidden space-y-4">
+      {% for payment in payments %}
+      <div class="border border-gray-200 rounded-2xl p-4 bg-white shadow-sm">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="text-sm text-gray-600">{{ payment.created_at|date:"d M Y, H:i" }}</div>
+            <div class="text-base font-semibold text-gray-900">
+              {% if payment.ride %}Ride #{{ payment.ride_id }}{% elif payment.subscription %}Subscription #{{ payment.subscription_id }}{% endif %}
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-sm font-semibold">{{ payment.currency }} {{ payment.amount }}</div>
+            <div class="text-xs mt-1 inline-flex items-center px-2 py-0.5 rounded-full border border-gray-700">{{ payment.get_status_display }}</div>
+          </div>
+        </div>
+
+        <!-- Mobile details raw markup (same structure JS expects) -->
+        <div class="mt-3 details-cell">
+          <div class="details-data sr-only" aria-hidden="true">
+            {% if payment.ride %}
+              <span class="d-from">{{ payment.ride.start_location }}</span>
+              <span class="d-to">{{ payment.ride.end_location }}</span>
+              <span class="d-driver">{{ payment.ride.driver.user.name|default:"N/A" }}</span>
+            {% elif payment.subscription %}
+              <span class="d-sub">{{ payment.subscription.plan_name|default:"N/A" }}</span>
+            {% endif %}
+            <span class="d-tip">{{ payment.tip_amount }}</span>
+            <span class="d-discount">{{ payment.discount_amount }}</span>
+            <span class="d-refund">{{ payment.refunded_amount }}</span>
+          </div>
+
+          <div class="details-render"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <!-- Back Button -->
+  <div class="mt-6 text-center">
+    <a href="#" class="inline-block px-6 py-2 border border-gray-800 text-gray-900 font-medium rounded-xl hover:bg-gray-100 transition">Back to Home</a>
+  </div>
+
+  {% else %}
+  <div class="bg-white border border-gray-200 rounded-xl p-6 text-center text-gray-600">
+    No payment history available.
+  </div>
+  {% endif %}
+</div>
+
+<!-- Inline JS: parses .details-data and renders structured HTML into .details-render -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // Utility to create an element with classes and optional innerHTML
+  function el(tag, classes = '', html = '') {
+    const e = document.createElement(tag);
+    if (classes) e.className = classes;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+
+  // Copy-to-clipboard with ephemeral toast
+  function copyText(text, btn) {
+    if (!navigator.clipboard) {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      ta.remove();
+      flash(btn, 'Copied');
+      return;
+    }
+    navigator.clipboard.writeText(text).then(() => flash(btn, 'Copied'));
+  }
+  function flash(btn, msg) {
+    const tip = document.createElement('span');
+    tip.className = 'ml-2 text-xs text-gray-700';
+    tip.textContent = msg;
+    btn.parentNode.appendChild(tip);
+    setTimeout(() => tip.remove(), 1200);
+  }
+
+  // Small SVG icons (black strokes)
+  const pinSVG = '<svg xmlns="http://www.w3.org/2000/svg" class="inline-block mr-2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+  const arrowSVG = '<svg xmlns="http://www.w3.org/2000/svg" class="inline-block" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>';
+  const userSVG = '<svg xmlns="http://www.w3.org/2000/svg" class="inline-block mr-2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+
+  // Find all details-cells
+  const cells = document.querySelectorAll('.details-cell');
+
+  cells.forEach(cell => {
+    const raw = cell.querySelector('.details-data');
+    const target = cell.querySelector('.details-render');
+    if (!raw || !target) return;
+
+    // read raw values (trim)
+    const from = (raw.querySelector('.d-from') && raw.querySelector('.d-from').textContent.trim()) || '';
+    const to = (raw.querySelector('.d-to') && raw.querySelector('.d-to').textContent.trim()) || '';
+    const driver = (raw.querySelector('.d-driver') && raw.querySelector('.d-driver').textContent.trim()) || '';
+    const sub = (raw.querySelector('.d-sub') && raw.querySelector('.d-sub').textContent.trim()) || '';
+    const tip = raw.querySelector('.d-tip') ? raw.querySelector('.d-tip').textContent.trim() : '';
+    const discount = raw.querySelector('.d-discount') ? raw.querySelector('.d-discount').textContent.trim() : '';
+    const refund = raw.querySelector('.d-refund') ? raw.querySelector('.d-refund').textContent.trim() : '';
+
+    // Clear target
+    target.innerHTML = '';
+
+    // If subscription only
+    if (sub && !from && !to) {
+      const wrap = el('div', 'text-sm text-gray-800');
+      wrap.appendChild(el('div', 'font-medium', 'Subscription'));
+      wrap.appendChild(el('div', 'text-gray-600 text-sm mt-1', sub));
+      target.appendChild(wrap);
+      return;
+    }
+
+    // Build structured layout
+    const container = el('div', 'space-y-2');
+
+    // From / To block
+    const routeWrap = el('div', 'flex flex-col md:flex-row md:items-start md:space-x-4');
+    const leftCol = el('div', 'flex-1');
+    const rightCol = el('div', 'flex-1');
+
+    // FROM block
+    if (from) {
+      const box = el('div', 'rounded-lg border border-gray-200 p-3');
+      const heading = el('div', 'text-xs font-semibold text-gray-700 mb-1');
+      heading.innerHTML = pinSVG + '<span>From</span>';
+      box.appendChild(heading);
+      box.appendChild(el('div', 'text-sm text-gray-900 whitespace-pre-line', from));
+
+      // copy button
+      const copyBtn = el('button', 'mt-3 text-xs inline-flex items-center px-2 py-1 border rounded-md text-gray-800 hover:bg-gray-50');
+      copyBtn.type = 'button';
+      copyBtn.innerHTML = 'Copy';
+      copyBtn.addEventListener('click', () => copyText(from, copyBtn));
+      box.appendChild(copyBtn);
+
+      leftCol.appendChild(box);
+    }
+
+    // TO block
+    if (to) {
+      const box = el('div', 'rounded-lg border border-gray-200 p-3 mt-2 md:mt-0');
+      const heading = el('div', 'text-xs font-semibold text-gray-700 mb-1');
+      heading.innerHTML = arrowSVG + '<span>To</span>';
+      box.appendChild(heading);
+      box.appendChild(el('div', 'text-sm text-gray-900 whitespace-pre-line', to));
+
+      const copyBtn = el('button', 'mt-3 text-xs inline-flex items-center px-2 py-1 border rounded-md text-gray-800 hover:bg-gray-50');
+      copyBtn.type = 'button';
+      copyBtn.innerHTML = 'Copy';
+      copyBtn.addEventListener('click', () => copyText(to, copyBtn));
+      box.appendChild(copyBtn);
+
+      rightCol.appendChild(box);
+    }
+
+    routeWrap.appendChild(leftCol);
+    routeWrap.appendChild(rightCol);
+    container.appendChild(routeWrap);
+
+    // Driver & amounts row
+    const metaRow = el('div', 'flex items-center justify-between mt-2 flex-wrap gap-2');
+    const driverDiv = el('div', 'flex items-center text-sm text-gray-800');
+    if (driver) {
+      driverDiv.innerHTML = userSVG + '<span class="font-medium mr-2">Driver:</span><span class="text-gray-700">' + escapeHtml(driver) + '</span>';
+    }
+    metaRow.appendChild(driverDiv);
+
+    const amountList = el('div', 'text-sm text-gray-700 flex items-center gap-3');
+    if (tip && Number(tip) > 0) {
+      amountList.appendChild(el('div', '', '<strong>Tip:</strong> ' + escapeHtml(tip)));
+    }
+    if (discount && Number(discount) > 0) {
+      amountList.appendChild(el('div', '', '<strong>Discount:</strong> ' + escapeHtml(discount)));
+    }
+    if (refund && Number(refund) > 0) {
+      amountList.appendChild(el('div', '', '<strong>Refunded:</strong> ' + escapeHtml(refund)));
+    }
+    if (amountList.children.length) metaRow.appendChild(amountList);
+
+    container.appendChild(metaRow);
+
+    // Small note: accessible hidden raw for screen readers
+    const sr = el('div', 'sr-only');
+    sr.innerHTML = (from ? 'From: ' + escapeHtml(from) + '. ' : '') + (to ? 'To: ' + escapeHtml(to) + '. ' : '') + (driver ? 'Driver: ' + escapeHtml(driver) + '. ' : '');
+    container.appendChild(sr);
+
+    target.appendChild(container);
+  });
+
+  // simple escaping for innerHTML small strings
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (m) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
+  }
+
+});
+</script>
+
+<style>
+/* keep small helper for sr-only if not available */
+.sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
+</style>
+
+<footer class=" w-full fixed flex bottom-0 bg-white border-t border-gray-200">
+    <div class="container mx-auto">
+    <nav class="flex justify-around">
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--text-secondary)] hover:text-[var(--primary-color)] flex-1" href="{% url 'customer_dashboard'%}">
+    <span class="material-symbols-outlined">home</span>
+    <span class="text-xs font-bold">Home</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--text-secondary)] hover:text-[var(--primary-color)] flex-1" href="{% url 'my_trips'%}">
+      <span class="material-symbols-outlined">local_taxi</span>
+      <span class="text-xs font-bold">Ride</span>
+      </a>
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--text-secondary)] hover:text-[var(--primary-color)] flex-1" href="{% url 'customer_profile' %}">
+    <span class="material-symbols-outlined">person</span>
+    <span class="text-xs font-bold">Profile</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--primary-color)] border-t-2 border-[var(--primary-color)] flex-1" href="{% url 'customer_payment_history'%}">
+    <span class="material-symbols-outlined">payment</span>
+    <span class="text-xs font-bold">Payments</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--text-secondary)] hover:text-[var(--primary-color)] flex-1" href="#">
+    <span class="material-symbols-outlined">support_agent</span>
+    <span class="text-xs font-bold">Support</span>
+    </a>
+    </nav>
+    </div>
+    </footer>
+
+{% endblock %}

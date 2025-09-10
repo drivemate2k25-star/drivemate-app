@@ -1,0 +1,159 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Driver Rating — {{ driver.user.name }}</title>
+
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+  <script src="/static/tailwind.js"></script>
+
+  <style>
+    :root{
+      --text:#0f172a;
+      --muted:#6b7280;
+      --accent:#111827;
+      --border:#e6e6eb;
+    }
+    body{ font-family: 'Space Grotesk', sans-serif; background:#fafafa; color:var(--text); }
+    .material-symbols-outlined{ font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
+    .star-small { width: 16px; height: 16px; display:inline-block; vertical-align:middle; margin-right:4px; }
+  </style>
+</head>
+<body class="antialiased min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white shadow-sm">
+    <div class="container mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-3xl" style="color:var(--accent)">directions_car</span>
+        <h1 class="text-2xl font-bold tracking-tight">DriveMate</h1>
+      </div>
+      <div>
+        <a href="{% url 'customer_profile' %}" class="inline-flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50 text-sm">
+          <span class="material-symbols-outlined">person</span> Profile
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-6 py-10">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-2xl font-extrabold text-gray-900 text-center mb-4">{{ driver.user.name }}</h2>
+
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div class="flex items-center gap-4">
+          <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center text-2xl font-semibold text-gray-700">
+            {% if driver.profile_pic.url %}
+            <img class="rounded-full" src="{{ driver.profile_pic.url }}" alt="">
+            {% else %}
+            {{ driver.user.name|slice:":1"|upper }}
+            {% endif %}
+          </div>
+
+          <div class="flex-1">
+            <div class="text-sm text-gray-500">Average rating</div>
+            <div class="flex items-center gap-3">
+              <div class="text-3xl font-bold text-gray-900">{{ avg_rating|floatformat:1|default:"-" }}</div>
+              <div class="flex items-center">
+                {% for i in "12345" %}
+                  {% if forloop.counter <= avg_rating|default:0|floatformat:0 %}
+                    <svg class="star-small" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.167L12 18.896 3.664 23.164l1.402-8.167L-0.868 9.21 7.332 8.018 12 .587z"/></svg>
+                  {% else %}
+                    <svg class="star-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden><path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.167L12 18.896 3.664 23.164l1.402-8.167L-0.868 9.21 7.332 8.018 12 .587z"/></svg>
+                  {% endif %}
+                {% endfor %}
+              </div>
+
+              <div class="text-sm text-gray-500"> · {{ ratings|length }} review{{ ratings|length|pluralize }}</div>
+            </div>
+
+            <div class="text-sm text-gray-600 mt-2">
+              {% if avg_rating %}
+                Based on {{ ratings|length }} rating{{ ratings|length|pluralize }}.
+              {% else %}
+                No ratings yet for this driver.
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        {% if ratings %}
+          <div class="mt-6">
+            <h3 class="text-md font-semibold text-gray-900 mb-3">Recent ratings</h3>
+            <ul class="space-y-3">
+              {% for rating in ratings %}
+                <li class="border rounded-lg p-3 bg-white">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <div class="text-sm font-medium text-gray-800">{{ rating.ride.customer.name }}</div>
+                        <div class="text-xs text-gray-400">· {{ rating.created_at|date:"d M Y" }}</div>
+                      </div>
+
+                      <div class="mt-2 text-sm text-gray-700">
+                        <!-- star row -->
+                        <span class="inline-flex items-center">
+                          {% for i in "12345" %}
+                            {% if forloop.counter <= rating.score %}
+                              <svg class="star-small" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.167L12 18.896 3.664 23.164l1.402-8.167L-0.868 9.21 7.332 8.018 12 .587z"/></svg>
+                            {% else %}
+                              <svg class="star-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden><path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.167L12 18.896 3.664 23.164l1.402-8.167L-0.868 9.21 7.332 8.018 12 .587z"/></svg>
+                            {% endif %}
+                          {% endfor %}
+                        </span>
+                      </div>
+
+                      {% if rating.feedback %}
+                        <div class="mt-2 text-sm text-gray-700">{{ rating.feedback }}</div>
+                      {% endif %}
+                    </div>
+
+                    <div class="text-sm text-gray-500">{% if rating.score %}{{ rating.score }}/5{% endif %}</div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="mt-6 text-center">
+        <a href="javascript:history.back()" class="inline-block text-sm text-gray-600 hover:underline">Back</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="w-full fixed bottom-0 bg-white border-t border-gray-200">
+    <div class="container mx-auto">
+      <nav class="flex justify-around">
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-sm text-gray-500 flex-1" href="{% url 'customer_dashboard'%}">
+          <span class="material-symbols-outlined">home</span>
+          <span>Home</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-sm text-gray-500 flex-1" href="{% url 'my_trips'%}">
+          <span class="material-symbols-outlined">local_taxi</span>
+          <span>Ride</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-sm text-gray-500 flex-1" href="{% url 'customer_profile' %}">
+          <span class="material-symbols-outlined">person</span>
+          <span>Profile</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-sm text-gray-500 flex-1" href="{% url 'customer_payment_history'%}">
+          <span class="material-symbols-outlined">payment</span>
+          <span>Payments</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-sm text-gray-500 flex-1" href="#">
+          <span class="material-symbols-outlined">support_agent</span>
+          <span>Support</span>
+        </a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

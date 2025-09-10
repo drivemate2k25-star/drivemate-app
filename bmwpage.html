@@ -1,0 +1,880 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect" />
+  <link as="style" href="https://fonts.googleapis.com/css2?display=swap&amp;family=Manrope:wght@400;500;700;800&amp;family=Noto+Sans:wght@400;500;700;900" onload="this.rel='stylesheet'" rel="stylesheet"/>
+  <title>Stitch Design</title>
+  <link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+  <script src="/accounts/static/js/tailwind.js"></script>
+  <style type="text/tailwindcss">
+    :root {
+      --primary-color: #0f66bd;
+      --secondary-color: #0a4a8c;
+      --background-color: #ffffff;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --accent-color: #1f80e0;
+    }
+    body {
+      font-family: 'Manrope', sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-primary);
+    }
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slide-up {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .carousel-item { animation: fade-in 1.5s ease-in-out; }
+    .carousel-content { animation: slide-up 1s ease-out 0.5s; animation-fill-mode: backwards; }
+
+    /* small tweak: ensure x-cloak elements are hidden until Alpine initializes */
+    [x-cloak] { display: none !important; }
+
+
+    #loader {
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      background:rgba(255,255,255,0.85); z-index:20; transition:opacity .25s ease;
+    }
+    #loader.hidden{ opacity:0; pointer-events:none; }
+    .loader-card { background:white; padding:18px 22px; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.08); text-align:center; font-size:14px; color:#111827; }
+    .progress { height:6px; background:#e6e6e6; border-radius:999px; overflow:hidden; margin-top:10px; }
+    .progress > div { height:100%; width:0%; border-radius:999px; background:linear-gradient(90deg,#2563eb,#7c3aed); transition:width .12s linear; }
+    .brand { position:absolute; left:12px; top:12px; z-index:10; font-weight:600; color:#111827; background:rgba(255,255,255,0.7); padding:6px 10px; border-radius:8px; backdrop-filter: blur(6px); font-family:Inter,system-ui; font-size:13px; }
+    .hint { position:absolute; bottom:14px; left:50%; transform:translateX(-50%); z-index:10; background:rgba(0,0,0,0.6); color:#fff; font-size:12px; padding:6px 10px; border-radius:999px; }
+
+    /* small polished badges for specs */
+    .spec-badge{
+      @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-white/70 border border-gray-100 text-gray-700 shadow-sm;
+    }
+  
+    /* progress bar color (keeps neutral / professional) */
+    #progressbar{ background: linear-gradient(90deg,#0b66ff,#06b6d4); height:100%; border-radius:999px; }
+  
+    /* make loader card a little less intrusive on desktop */
+    @media (min-width: 768px){
+      #loader { opacity: 0.95; backdrop-filter: blur(6px); }
+    }
+  
+    /* smooth, subtle transitions for canvas / viewer */
+    #viewer canvas { transition: transform 180ms cubic-bezier(.2,.9,.3,1); }
+    #viewer:hover canvas { transform: translateZ(0.01px); }
+  
+    /* small accessible focus style for CTAs */
+    a:focus { outline: 3px solid rgba(11,102,255,0.12); outline-offset: 2px; border-radius: 0.5rem; }
+
+    #viewer { width: 100%; height: 100%; } 
+    #viewer canvas { width: 100% !important; height: 100% !important; display:block; }
+  
+    /* Optional: keep loader above canvas */
+    #loader { z-index: 30; }
+  
+    /* progressbar color */
+    #progressbar { background: linear-gradient(90deg,#0b66ff,#06b6d4); height:100%; border-radius:999px; }
+  </style>
+  
+</head>
+<body class="bg-[var(--background-color)] text-[var(--text-primary)] antialiased">
+  <div class="relative flex size-full min-h-screen flex-col group/design-root overflow-x-hidden">
+    <div class="layout-container flex h-full grow flex-col">
+
+      <!-- Header: added Alpine x-data for mobile menu handling; minimal JS only for toggling body scroll -->
+      <header
+            class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between whitespace-nowrap bg-white/80 backdrop-blur-md px-4 sm:px-10 py-4 transition-all duration-300 shadow-sm"
+            x-data="{ open: false }"
+            x-init="$watch('open', v => document.body.style.overflow = v ? 'hidden' : '')"
+            @keydown.window.escape="open = false"
+            >
+      <div class="flex items-center gap-4">
+          <div class="size-8 text-[var(--primary-color)]">
+            <!-- SVG unchanged -->
+            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <g clip-path="url(#clip0_6_543)">
+                <path d="M42.1739 20.1739L27.8261 5.82609C29.1366 7.13663 28.3989 10.1876 26.2002 13.7654C24.8538 15.9564 22.9595 18.3449 20.6522 20.6522C18.3449 22.9595 15.9564 24.8538 13.7654 26.2002C10.1876 28.3989 7.13663 29.1366 5.82609 27.8261L20.1739 42.1739C21.4845 43.4845 24.5355 42.7467 28.1133 40.548C30.3042 39.2016 32.6927 37.3073 35 35C37.3073 32.6927 39.2016 30.3042 40.548 28.1133C42.7467 24.5355 43.4845 21.4845 42.1739 20.1739Z" fill="currentColor"></path>
+                <path clip-rule="evenodd" d="M7.24189 26.4066C7.31369 26.4411 7.64204 26.5637 8.52504 26.3738C9.59462 26.1438 11.0343 25.5311 12.7183 24.4963C14.7583 23.2426 17.0256 21.4503 19.238 19.238C21.4503 17.0256 23.2426 14.7583 24.4963 12.7183C25.5311 11.0343 26.1438 9.59463 26.3738 8.52504C26.5637 7.64204 26.4411 7.31369 26.4066 7.24189C26.345 7.21246 26.143 7.14535 25.6664 7.1918C24.9745 7.25925 23.9954 7.5498 22.7699 8.14278C20.3369 9.32007 17.3369 11.4915 14.4142 14.4142C11.4915 17.3369 9.32007 20.3369 8.14278 22.7699C7.5498 23.9954 7.25925 24.9745 7.1918 25.6664C7.14534 26.143 7.21246 26.345 7.24189 26.4066ZM29.9001 10.7285C29.4519 12.0322 28.7617 13.4172 27.9042 14.8126C26.465 17.1544 24.4686 19.6641 22.0664 22.0664C19.6641 24.4686 17.1544 26.465 14.8126 27.9042C13.4172 28.7617 12.0322 29.4519 10.7285 29.9001L21.5754 40.747C21.6001 40.7606 21.8995 40.931 22.8729 40.7217C23.9424 40.4916 25.3821 39.879 27.0661 38.8441C29.1062 37.5904 31.3734 35.7982 33.5858 33.5858C35.7982 31.3734 37.5904 29.1062 38.8441 27.0661C39.879 25.3821 40.4916 23.9425 40.7216 22.8729C40.931 21.8995 40.7606 21.6001 40.747 21.5754L29.9001 10.7285ZM29.2403 4.41187L43.5881 18.7597C44.9757 20.1473 44.9743 22.1235 44.6322 23.7139C44.2714 25.3919 43.4158 27.2666 42.252 29.1604C40.8128 31.5022 38.8165 34.012 36.4142 36.4142C34.012 38.8165 31.5022 40.8128 29.1604 42.252C27.2666 43.4158 25.3919 44.2714 23.7139 44.6322C22.1235 44.9743 20.1473 44.9757 18.7597 43.5881L4.41187 29.2403C3.29027 28.1187 3.08209 26.5973 3.21067 25.2783C3.34099 23.9415 3.8369 22.4852 4.54214 21.0277C5.96129 18.0948 8.43335 14.7382 11.5858 11.5858C14.7382 8.43335 18.0948 5.9613 21.0277 4.54214C22.4852 3.8369 23.9415 3.34099 25.2783 3.21067C26.5973 3.08209 28.1187 3.29028 29.2403 4.41187Z" fill="currentColor" fill-rule="evenodd"></path>
+              </g>
+              <defs>
+                <clipPath id="clip0_6_543"><rect fill="white" height="48" width="48"></rect></clipPath>
+              </defs>
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold leading-tight tracking-[-0.015em] text-[var(--text-primary)]">DriveMate</h2>
+        </div>
+
+        <!-- Desktop nav -->
+        <nav class="hidden lg:flex items-center gap-9" 
+     x-data="{ open: false, timeout: null }">
+  
+  <!-- Dropdown -->
+  
+
+  <!-- Other nav items -->
+  <a class="text-sm font-medium leading-normal text-[var(--text-primary)] hover:text-[var(--primary-color)] transition-colors" href="{% url 'login' %}">Sign in</a>
+  <div class="relative" @mouseenter="clearTimeout(timeout); open = true"  @mouseleave="timeout = setTimeout(() => open = false, 200)"><button class="text-sm font-medium leading-normal text-[var(--text-primary)] hover:text-[var(--primary-color)] transition-colors flex items-center gap-1">
+    Sign up
+    <svg class="w-4 h-4 transition-transform duration-200" 
+         :class="{ 'rotate-180': open }" 
+         fill="none" stroke="currentColor" stroke-width="2" 
+         viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+    </svg>
+  </button>
+
+  <!-- Dropdown Menu -->
+  <div x-show="open" x-transition class="absolute mt-2 w-40 bg-white shadow-lg rounded-lg py-2 z-50 border border-gray-200">
+    <a href="{% url 'driver_register' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Driver Register</a>
+    <a href="{% url 'customer_register' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Customer Register</a>
+  </div>
+</div>
+  <a class="text-sm font-medium leading-normal text-[var(--text-primary)] hover:text-[var(--primary-color)] transition-colors" href="#">About us</a>
+  <a class="text-sm font-medium leading-normal text-[var(--text-primary)] hover:text-[var(--primary-color)] transition-colors" href="#">Contact</a>
+</nav>
+
+
+        <div class="flex items-center gap-4">
+          <button class="hidden lg:flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-md h-10 px-6 bg-[var(--primary-color)] text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-[var(--accent-color)] transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:ring-opacity-50">
+            <span class="truncate">Book now</span>
+          </button>
+
+          <!-- Mobile hamburger -->
+          <button
+                class="lg:hidden text-[var(--text-primary)] focus:outline-none"
+                @click="open = !open"
+                :aria-expanded="open ? 'true' : 'false'"
+                aria-label="Toggle menu"
+                >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6h16M4 12h16m-7 6h7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                </svg>
+                </button>
+        </div>
+
+        <!-- Mobile menu: panel + backdrop. Kept separate to ensure clicks register properly on links -->
+        <div
+            x-show="open"
+            x-cloak
+            class="lg:hidden fixed inset-0 z-40"
+            x-transition:enter="transition-opacity ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            aria-hidden="!open"
+        >
+        <div class="absolute inset-0 bg-black bg-opacity-40" @click="open = false"></div>
+
+          <!-- sliding panel -->
+          <aside
+          class="absolute right-0 top-0 h-[100vh] w-full sm:w-3/4 max-w-md bg-white p-6 overflow-y-auto shadow-xl"
+          @click.stop
+          style="touch-action: pan-y;"
+          x-transition:enter="transition transform ease-out duration-250"
+          x-transition:enter-start="-translate-x-full opacity-0"
+          x-transition:enter-end="translate-x-0 opacity-100"
+          x-transition:leave="transition transform ease-in duration-200"
+          x-transition:leave-start="translate-x-0 opacity-100"
+          x-transition:leave-end="-translate-x-full opacity-0"
+          role="dialog"
+          aria-modal="true"
+          
+        >
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <div class="size-8 text-[var(--primary-color)]">
+                <!-- small logo copy -->
+                <svg width="30" height="30" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_6_543)"><path d="M42.1739 20.1739L27.8261 5.82609C29.1366 7.13663 28.3989 10.1876 26.2002 13.7654C24.8538 15.9564 22.9595 18.3449 20.6522 20.6522C18.3449 22.9595 15.9564 24.8538 13.7654 26.2002C10.1876 28.3989 7.13663 29.1366 5.82609 27.8261L20.1739 42.1739C21.4845 43.4845 24.5355 42.7467 28.1133 40.548C30.3042 39.2016 32.6927 37.3073 35 35C37.3073 32.6927 39.2016 30.3042 40.548 28.1133C42.7467 24.5355 43.4845 21.4845 42.1739 20.1739Z" fill="currentColor"></path></g><defs><clipPath id="clip0_6_543"><rect width="48" height="48" fill="white"/></clipPath></defs></svg>
+              </div>
+              <h3 class="font-bold text-lg">DriveMate</h3>
+            </div>
+    
+            <button class="text-gray-600" @click="open = false" aria-label="Close menu">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+            </button>
+          </div>
+    
+          <nav class="flex flex-col gap-4">
+            <a class="text-base font-medium text-[var(--text-primary)] hover:text-[var(--primary-color)]" href="#">Rent a car</a>
+            <a class="text-base font-medium text-[var(--text-primary)] hover:text-[var(--primary-color)]" href="#">Rent a driver</a>
+            <a class="text-base font-medium text-[var(--text-primary)] hover:text-[var(--primary-color)]" href="#">About us</a>
+            <a class="text-base font-medium text-[var(--text-primary)] hover:text-[var(--primary-color)]" href="#">Contact</a>
+          </nav>
+    
+          <div class="mt-6">
+            <a class="inline-block w-full text-center rounded-md px-4 py-3 bg-[var(--primary-color)] text-white font-bold" href="#">Book now</a>
+          </div>
+    
+          <div class="mt-6 text-sm text-[var(--text-secondary)]">© 2025 DriveMate</div>
+        </aside>
+        </div>
+      </header>
+
+      <main class="flex-1 pt-24"> <!-- add top padding so content not hidden behind fixed header -->
+
+        <!-- Carousel: kept original structure but removed inline style="display:none;" and added small x-transition to smoothen changes -->
+        <div class="relative h-screen w-full overflow-hidden" x-data="{ activeSlide: 1, slides: [1,2,3], autoplay:null }" x-init="autoplay = setInterval(()=>{ activeSlide = activeSlide === slides.length ? 1 : activeSlide + 1 }, 5000)
+          " @mouseenter="clearInterval(autoplay)" @mouseleave="autoplay = setInterval(()=>{ activeSlide = activeSlide === slides.length ? 1 : activeSlide + 1 }, 5000)">
+
+          <div class="absolute inset-0 carousel-item" x-show="activeSlide === 1" x-transition:enter="transition-opacity duration-700" x-transition:leave="transition-opacity duration-500">
+            <div class="absolute inset-0 bg-cover bg-center" style='background-image: linear-gradient(to top, rgba(0,0,0,0.7) 10%, rgba(0,0,0,0) 50%), url("https://bmw.scene7.com/is/image/BMW/DI23_000189521:16to7?fmt=webp&wid=2560&hei=1120");'></div>
+            <div class="absolute inset-0 flex items-center justify-center lg:justify-start p-8 md:p-12 lg:p-24">
+              <div class="text-center lg:text-left max-w-2xl carousel-content">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-4">Experience the Ultimate in Luxury Travel</h1>
+                <p class="text-lg text-gray-200 leading-relaxed mb-8">Arrive in style and comfort with our premium vehicle rental service, complete with a professional driver.</p>
+                <button class="bg-[var(--primary-color)] text-white px-8 py-4 rounded-md text-lg font-bold hover:bg-[var(--accent-color)] transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:ring-opacity-50">
+                  <span class="truncate">Discover the Fleet</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="absolute inset-0 carousel-item" x-show="activeSlide === 2" x-transition:enter="transition-opacity duration-700" x-transition:leave="transition-opacity duration-500">
+            <div class="absolute inset-0 bg-cover bg-center" style='background-image: linear-gradient(to top, rgba(0,0,0,0.7) 10%, rgba(0,0,0,0) 50%), url("https://images.pexels.com/photos/2676096/pexels-photo-2676096.jpeg?_gl=1*3y29p8*_ga*MTEyNzA5OTc1NC4xNzU2NzI1ODM3*_ga_8JE65Q40S6*czE3NTY3MjU4MzYkbzEkZzEkdDE3NTY3MjU4NDUkajUxJGwwJGgw");'></div>
+            <div class="absolute inset-0 flex items-center justify-center lg:justify-start p-8 md:p-12 lg:p-24">
+              <div class="text-center lg:text-left max-w-2xl carousel-content">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-4">Unmatched Comfort and Space</h1>
+                <p class="text-lg text-gray-200 leading-relaxed mb-8">Our Premium SUVs provide ample room for passengers and luggage, ensuring a relaxing journey.</p>
+                <button class="bg-[var(--primary-color)] text-white px-8 py-4 rounded-md text-lg font-bold hover:bg-[var(--accent-color)] transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:ring-opacity-50">
+                  <span class="truncate">Book a Premium SUV</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="absolute inset-0 carousel-item" x-show="activeSlide === 3" x-transition:enter="transition-opacity duration-700" x-transition:leave="transition-opacity duration-500">
+            <div class="absolute inset-0 bg-cover bg-center" style='background-image: linear-gradient(to top, rgba(0,0,0,0.7) 10%, rgba(0,0,0,0) 50%), url("https://images.unsplash.com/photo-1714008384412-97137b26ab42?q=80&w=1306&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");'></div>
+            <div class="absolute inset-0 flex items-center justify-center lg:justify-start p-8 md:p-12 lg:p-24">
+              <div class="text-center lg:text-left max-w-2xl carousel-content">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-4">Elegance in Motion</h1>
+                <p class="text-lg text-gray-200 leading-relaxed mb-8">The Elite Sedan combines sophisticated design with powerful performance for an unforgettable ride.</p>
+                <button class="bg-[var(--primary-color)] text-white px-8 py-4 rounded-md text-lg font-bold hover:bg-[var(--accent-color)] transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:ring-opacity-50">
+                  <span class="truncate">Reserve an Elite Sedan</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- dots --- keep accessible and touch-friendly -->
+          <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex space-x-3 z-20">
+            <button :class="{'bg-white': activeSlide === 1, 'bg-white/50': activeSlide !== 1}" @click="activeSlide = 1" class="w-2.5 h-2.5 rounded-full transition-colors duration-300" aria-label="Slide 1" tabindex="0"></button>
+            <button :class="{'bg-white': activeSlide === 2, 'bg-white/50': activeSlide !== 2}" @click="activeSlide = 2" class="w-2.5 h-2.5 rounded-full transition-colors duration-300" aria-label="Slide 2" tabindex="0"></button>
+            <button :class="{'bg-white': activeSlide === 3, 'bg-white/50': activeSlide !== 3}" @click="activeSlide = 3" class="w-2.5 h-2.5 rounded-full transition-colors duration-300" aria-label="Slide 3" tabindex="0"></button>
+          </div>
+        </div>
+
+        <!-- Full-width responsive Tailwind container -->
+        <div class="w-full ">
+            <div class="w-full mx-auto px-4 py-8">
+              <article class="relative w-full  overflow-hidden flex flex-col md:flex-row items-stretch">
+                <!-- driver small avatar + name (top-right) -->
+                <div class="absolute top-4 right-4 z-30">
+                  <div class="flex items-center gap-3 bg-white/95 px-3 py-1.5 rounded-full shadow-sm border border-gray-100">
+                    <img src="/path/to/driver-avatar.jpg" alt="Driver avatar" class="w-9 h-9 rounded-full object-cover ring-1 ring-gray-200">
+                    <div class="text-right">
+                      <div class="text-xs text-gray-500">Driver</div>
+                      <div class="text-sm font-medium text-gray-800 leading-tight">Rahul Kumar</div>
+                    </div>
+                  </div>
+                </div>
+          
+                <!-- image / viewer column -->
+                <!-- image / viewer column (replace your existing viewer block) -->
+                <div class="md:w-6/12 w-full relative flex-shrink-0">
+                    <div id="viewer" aria-label="3D viewer" class="h-58 sm:h-64 bg-white md:h-[820px] w-full relative">
+                    <canvas id="c" aria-label="3D viewer" class="w-full h-full block bg-white"></canvas>
+                
+                    <!-- subtle overlay for depth -->
+                    
+                    <!-- loader (subtle card) -->
+                    <div id="loader" aria-hidden="false" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm rounded-lg px-4 py-3 text-sm text-gray-600 ">
+                        <div class="font-medium text-gray-700">Loading model</div>
+                        <div class="mt-2 w-52 bg-gray-100 rounded-full overflow-hidden h-2">
+                        <div id="progressbar" style="width:0%" class="h-2 rounded-full transition-all"></div>
+                        </div>
+                        <div id="progresslabel" class="mt-2 text-xs text-gray-500">0%</div>
+                    </div>
+                
+                    <!-- touch hint (show on mobile too now) -->
+                    <div id="touch-hint" class="absolute bottom-3 left-3 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded-full shadow-sm">
+                        Drag left / right to rotate
+                    </div>
+                    </div>
+                </div>
+  
+          
+                <!-- content column -->
+                <div class="md:w-6/12 w-full p-6 md:p-8 flex flex-col justify-center gap-4">
+                  <header>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">Our Top Rated Car</h2>
+                    <p class="mt-1 text-sm sm:text-base text-gray-600 max-w-prose">
+                      Sleek design, best-in-class comfort and safety — a driver favorite with outstanding reviews.
+                    </p>
+                  </header>
+          
+                  <!-- rating + quick stats -->
+                  <div class="flex items-center gap-4 mt-2">
+                    <div class="flex items-center gap-2">
+                      <!-- accessible star group (SVG icons) -->
+                      <div class="flex -space-x-0.5" role="img" aria-label="4.2 out of 5 stars">
+                        <svg class="w-5 h-5 text-yellow-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .587l3.668 7.431L23.4 9.75l-5.7 5.55L19.334 24 12 20.01 4.666 24l1.634-8.7L.6 9.75l7.732-1.732L12 .587z"/></svg>
+                        <svg class="w-5 h-5 text-yellow-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .587l3.668 7.431L23.4 9.75l-5.7 5.55L19.334 24 12 20.01 4.666 24l1.634-8.7L.6 9.75l7.732-1.732L12 .587z"/></svg>
+                        <svg class="w-5 h-5 text-yellow-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .587l3.668 7.431L23.4 9.75l-5.7 5.55L19.334 24 12 20.01 4.666 24l1.634-8.7L.6 9.75l7.732-1.732L12 .587z"/></svg>
+                        <svg class="w-5 h-5 text-yellow-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .587l3.668 7.431L23.4 9.75l-5.7 5.55L19.334 24 12 20.01 4.666 24l1.634-8.7L.6 9.75l7.732-1.732L12 .587z"/></svg>
+                        <svg class="w-5 h-5 text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .587l3.668 7.431L23.4 9.75l-5.7 5.55L19.334 24 12 20.01 4.666 24l1.634-8.7L.6 9.75l7.732-1.732L12 .587z"/></svg>
+                      </div>
+                      <span class="text-sm text-gray-500">4.2 · <span class="text-gray-700 font-medium">1,248</span> rides</span>
+                    </div>
+          
+                    <!-- price chip / quick callout -->
+                    <div class="ml-auto flex items-center gap-2">
+                      <span class="text-xs uppercase text-gray-500">From</span>
+                      <span class="text-lg font-semibold text-gray-900">₹899 / ride</span>
+                    </div>
+                  </div>
+          
+                  <!-- quick specs -->
+                  <ul class="flex flex-wrap items-center gap-2 mt-2">
+                    <li class="spec-badge"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h18"/></svg> 5 seats</li>
+                    <li class="spec-badge"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/></svg> Petrol</li>
+                    <li class="spec-badge"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18v12H3z"/></svg> Auto</li>
+                    <li class="spec-badge"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v6"/></svg> 2023</li>
+                  </ul>
+          
+                  <!-- CTA area -->
+                  <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-3">
+                    <a href="#" class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[linear-gradient(90deg,#0b66ff,#06b6d4)] text-white text-sm font-semibold rounded-lg shadow-lg transform transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-[rgba(6,182,212,0.12)]">
+                      <!-- simple car icon -->
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13l2-5h14l2 5"/></svg>
+                      View Details
+                    </a>
+          
+                    <a href="#" class="inline-flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition">
+                      Compare
+                    </a>
+                  </div>
+          
+                  <!-- subtle footnote -->
+                  <p class="mt-3 text-xs text-gray-400">All fares and specs are indicative. Actual availability may vary by city and driver.</p>
+                </div>
+              </article>
+            </div>
+          </div>
+  
+
+        <!-- Fleet section (unchanged layout) -->
+        <section class="py-24 px-4 sm:px-8 lg:px-16 bg-gray-50">
+          <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-[var(--text-primary)] mb-4">Our Fleet</h2>
+            <p class="text-xl text-[var(--text-secondary)] max-w-3xl mx-auto">Explore our selection of meticulously maintained luxury vehicles.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <div class="bg-white rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-2 border border-gray-200">
+              <div class="w-full h-56 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDhGPMHHboGmNuGRLqukxvD4z5Gd43DhbR77KkhzD_eSFabFEinm87pB5HJgRA1FYB8AydgR-mG606hYvzXuGjoiz8zxeCswYPC59aaydFGS_20bhHNfhh1lgehCkdOYDvS_dcGFQiV5yh1rmy2iuGxpFId_QgDmE8Da3OJqxr0MwY7so2NyK4TP43pNOJMb3sPRespxg6fU1Cqk85_rTWsFP82yIlMf9rZP-n9xWUfY3yT7PdQWuVJmgB6FsuTGL5_fzddL62Ow_U");'></div>
+              <div class="p-6">
+                <h3 class="text-xl font-bold text-[var(--text-primary)] mb-2">Elite Sedan</h3>
+                <p class="text-[var(--text-secondary)] text-sm">The epitome of elegance and comfort, ideal for business travel or special occasions.</p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-2 border border-gray-200">
+              <div class="w-full h-56 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBmx3xc9b-DwFj3OJgKeh8YnpVoROTywKcpSmfXA6fhUgLad02TIoUiGJwhUUZaLiXPes4AWMw-MsUB92TR1Gq6hPtxrXDBBUqJH4DQtvh_j0bFr5GGUIuuGDUyehfG09HQ1yEM8qUUuI4fKxc2czx_ueYR3r98qHzw4ZafDfEqrPjDdOzYXyUuu0ESMZC--yUJLYh9tq-NgWhYSNr7i437ML5SimYG9Klj9LhYyVjFKb1kfMb4HsRMJWn2qjT4O4OhjrhBA0pvVAQ");'></div>
+              <div class="p-6">
+                <h3 class="text-xl font-bold text-[var(--text-primary)] mb-2">Premium SUV</h3>
+                <p class="text-[var(--text-secondary)] text-sm">Spacious and luxurious, perfect for families or groups seeking a comfortable ride.</p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-2 border border-gray-200">
+              <div class="w-full h-56 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBRqJbY-1NAwR0jBTQGSo7jMGMfFSiLbl1Yw_utXWZmkf_OhxNkPc_p7YItWSrJ6yhigcd_tAsQbLdoFA2hb4qd12DuIRhsAy5J-3KUFld9YtZGMyz5r4mRPNbhsewLSDYbNKl0zIj4DrghICaA7O-Bk-ZiENfOau1coZxNd03KkFq0iw6huYSqR4RdqUeKJH6lhfK5oyO5S6Ek2LGYl2nYIgspKgf8Qw5McU63OGJoKBJSvXuTzzAW1OwKYUCa48BZMit0tOhU3Do");'></div>
+              <div class="p-6">
+                <h3 class="text-xl font-bold text-[var(--text-primary)] mb-2">Convertible Roadster</h3>
+                <p class="text-[var(--text-secondary)] text-sm">Experience the thrill of open-top driving in this stylish and powerful convertible.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Why choose section (unchanged) -->
+        <section class="py-24 px-4 sm:px-8 lg:px-16 bg-white">
+          <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-[var(--text-primary)] mb-4">Why Choose DriveMate?</h2>
+            <p class="text-xl text-[var(--text-secondary)] max-w-3xl mx-auto">Unparalleled Service and Comfort</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div class="flex flex-col items-center text-center p-8 rounded-lg bg-gray-50 shadow-md border border-gray-100">
+              <div class="text-[var(--primary-color)] text-5xl mb-5">
+                <svg fill="currentColor" height="64" viewBox="0 0 256 256" width="64" xmlns="http://www.w3.org/2000/svg"><path d="M240,112H229.2L201.42,49.5A16,16,0,0,0,186.8,40H69.2a16,16,0,0,0-14.62,9.5L26.8,112H16a8,8,0,0,0,0,16h8v80a16,16,0,0,0,16,16H64a16,16,0,0,0,16-16V192h96v16a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16V128h8a8,8,0,0,0,0-16ZM69.2,56H186.8l24.89,56H44.31ZM64,208H40V192H64Zm128,0V192h24v16Zm24-32H40V128H216ZM56,152a8,8,0,0,1,8-8H80a8,8,0,0,1,0,16H64A8,8,0,0,1,56,152Zm112,0a8,8,0,0,1,8-8h16a8,8,0,0,1,0,16H176A8,8,0,0,1,168,152Z"></path></svg>
+              </div>
+              <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-3">Luxury Fleet</h3>
+              <p class="text-[var(--text-secondary)]">Our vehicles are meticulously maintained and equipped with the latest amenities to ensure a comfortable and enjoyable ride.</p>
+            </div>
+
+            <div class="flex flex-col items-center text-center p-8 rounded-lg bg-gray-50 shadow-md border border-gray-100">
+              <div class="text-[var(--primary-color)] text-5xl mb-5">
+                <svg fill="currentColor" height="64" viewBox="0 0 256 256" width="64" xmlns="http://www.w3.org/2000/svg"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"></path></svg>
+              </div>
+              <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-3">Professional Drivers</h3>
+              <p class="text-[var(--text-secondary)]">Our experienced and courteous drivers are dedicated to providing exceptional service and ensuring your safety and satisfaction.</p>
+            </div>
+
+            <div class="flex flex-col items-center text-center p-8 rounded-lg bg-gray-50 shadow-md border border-gray-100">
+              <div class="text-[var(--primary-color)] text-5xl mb-5">
+                <svg fill="currentColor" height="64" viewBox="0 0 256 256" width="64" xmlns="http://www.w3.org/2000/svg"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"></path></svg>
+              </div>
+              <h3 class="text-2xl font-bold text-[var(--text-primary)] mb-3">Flexible Scheduling</h3>
+              <p class="text-[var(--text-secondary)]">We offer flexible rental options to accommodate your specific needs, whether it's for a few hours, a full day, or longer.</p>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <footer class="bg-gray-100 text-[var(--text-secondary)] py-10 px-4 text-center border-t border-gray-200">
+        <div class="container mx-auto">
+          <p>© 2025 DriveMate. All Rights Reserved.</p>
+          <div class="flex justify-center gap-4 mt-4">
+            <a class="text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors duration-200" href="#">Privacy Policy</a>
+            <a class="text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors duration-200" href="#">Terms of Service</a>
+          </div>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+        "three/": "https://cdn.jsdelivr.net/npm/three@0.152.2/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/loaders/GLTFLoader.js';
+    import { MeshoptDecoder } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/libs/meshopt_decoder.module.js';
+    import { DRACOLoader } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/loaders/DRACOLoader.js';
+
+    // === USER-CHANGEABLE SETTINGS ===
+    const MODEL_URL = '/accounts/static/output.glb'; // <-- replace with your model path or URL
+    const AUTO_ROTATE_SPEED = 0.4;
+    const AUTO_ROTATE_DIRECTION = -1;
+    const AUTO_RESUME_DELAY = 1800;
+    const SHOW_AXES = false;
+    const MIN_RENDER_SCALE = 2.0;  // lower bounds when adapting for perf
+    const MAX_RENDER_SCALE = 4.0;  // max backing buffer scale (1.0 = full size)
+    const HIGH_QUALITY_PIXELRATIO_CAP = 10.5; // cap when boosting quality
+    // ================================
+
+    // Elements
+    const container = document.getElementById('viewer');
+    const canvas = document.getElementById('c');
+    const loaderEl = document.getElementById('loader');
+    const progressBar = document.getElementById('progressbar');
+    const progressLabel = document.getElementById('progresslabel');
+    const touchHint = document.getElementById('touch-hint');
+
+    canvas.style.touchAction = 'pan-y pinch-zoom';
+
+    // --- renderer & scene setup ---
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: false,
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
+
+    // We'll use backing-buffer scaling (renderScale) instead of devicePixelRatio for predictable perf.
+    renderer.setPixelRatio(1);
+    renderer.autoClear = true;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf7fafc);
+
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 2000);
+    camera.position.set(0, 1.2, 3.5);
+
+    // modest lights for balanced perf
+    const ambient = new THREE.HemisphereLight(0xffffff, 0x888888, 0.9);
+    scene.add(ambient);
+    const key = new THREE.DirectionalLight(0xffffff, 0.6);
+    key.position.set(4, 6, 4);
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0xcfe8ff, 0.25);
+    rim.position.set(-6, 4, -6);
+    scene.add(rim);
+
+    const pivot = new THREE.Group();
+    pivot.position.set(0, 0, 0);
+    scene.add(pivot);
+    if (SHOW_AXES) pivot.add(new THREE.AxesHelper(1.5));
+
+    // --- state ---
+    let car = null;
+    let mixer = null;
+    let isLoaded = false;
+
+    let autoRotate = true;
+    let autoDir = AUTO_ROTATE_DIRECTION;
+    let autoSpeed = AUTO_ROTATE_SPEED;
+
+    // Interaction state
+    let pointerDown = false;
+    let startX = 0;
+    let startRotation = 0;
+    let lastInteraction = performance.now();
+    let isInteracting = false;
+
+    // Throttled pointermove
+    let latestPointerX = null;
+    let pointerMoveScheduled = false;
+    const pointerSensitivity = 0.0065;
+
+    function schedulePointerUpdate() {
+      if (pointerMoveScheduled) return;
+      pointerMoveScheduled = true;
+      requestAnimationFrame(() => {
+        pointerMoveScheduled = false;
+        if (latestPointerX == null || !pointerDown) return;
+        const dx = latestPointerX - startX;
+        pivot.rotation.y = startRotation + dx * pointerSensitivity;
+      });
+    }
+
+    function onCanvasPointerDown(e) {
+      pointerDown = true;
+      isInteracting = true;
+      startX = (e.touches ? e.touches[0].clientX : e.clientX);
+      startRotation = pivot.rotation.y;
+      lastInteraction = performance.now();
+      if (e.touches) e.preventDefault?.();
+      boostQualityTemporarily(); // make interaction crisp
+    }
+
+    function onCanvasPointerMove(e) {
+      if (!pointerDown) return;
+      latestPointerX = (e.touches ? e.touches[0].clientX : e.clientX);
+      lastInteraction = performance.now();
+      schedulePointerUpdate();
+    }
+
+    function onCanvasPointerUp() {
+      pointerDown = false;
+      lastInteraction = performance.now();
+      latestPointerX = null;
+      setTimeout(() => { isInteracting = false; }, 120);
+      boostQualityTemporarily(); // boost on release so final frame is crisp
+    }
+
+    function onWheel(e) {
+      const delta = e.deltaY || e.wheelDelta;
+      pivot.rotation.y += delta * 0.002;
+      lastInteraction = performance.now();
+      e.preventDefault();
+      boostQualityTemporarily();
+    }
+
+    canvas.addEventListener('pointerdown', onCanvasPointerDown, { passive: true });
+    canvas.addEventListener('pointermove', onCanvasPointerMove, { passive: true });
+    window.addEventListener('pointerup', onCanvasPointerUp, { passive: true });
+    window.addEventListener('pointercancel', onCanvasPointerUp, { passive: true });
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+
+    // loader
+    const loader = new GLTFLoader();
+    if (typeof MeshoptDecoder !== 'undefined') loader.setMeshoptDecoder(MeshoptDecoder);
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    loader.setDRACOLoader(dracoLoader);
+
+    loader.load(MODEL_URL,
+      (gltf) => {
+        if (car) { pivot.remove(car); disposeObject(car); car = null; }
+        car = gltf.scene || gltf.scenes[0];
+
+        // scale & center
+        const box = new THREE.Box3().setFromObject(car);
+        const size = box.getSize(new THREE.Vector3()).length();
+        const desiredSize = 2.2;
+        const scale = desiredSize / Math.max(size, 0.0001);
+        car.scale.setScalar(scale);
+
+        box.setFromObject(car);
+        const center = box.getCenter(new THREE.Vector3());
+        car.position.x -= center.x;
+        car.position.y -= center.y;
+        car.position.z -= center.z;
+
+        pivot.add(car);
+
+        // frame camera
+        const sphere = box.getBoundingSphere(new THREE.Sphere());
+        const radius = sphere.radius;
+        const camDist = Math.max(1.8, radius * 2.5);
+        camera.position.set(camDist * 0.6, radius * 0.6, camDist * 0.9);
+        camera.lookAt(0, 0, 0);
+        camera.updateProjectionMatrix();
+
+        // animations
+        if (gltf.animations && gltf.animations.length) {
+          mixer = new THREE.AnimationMixer(car);
+          gltf.animations.forEach((clip) => mixer.clipAction(clip).play());
+        }
+
+        // improve texture sampling for crispness (anisotropy, mipmaps, encoding)
+        (function improveTextures() {
+          let maxAniso = 1;
+          try {
+            // some three builds expose renderer.capabilities.getMaxAnisotropy()
+            maxAniso = typeof renderer.capabilities.getMaxAnisotropy === 'function'
+              ? renderer.capabilities.getMaxAnisotropy()
+              : (renderer.capabilities.maxAnisotropy || 1);
+          } catch (e) { maxAniso = 1; }
+
+          car.traverse((o) => {
+            if (!o.isMesh) return;
+            const mats = Array.isArray(o.material) ? o.material : [o.material];
+            mats.forEach((mat) => {
+              if (!mat) return;
+              ['map','emissiveMap','aoMap','lightMap','metalnessMap','roughnessMap','normalMap','alphaMap','envMap'].forEach((slot) => {
+                const tex = mat[slot];
+                if (tex && tex.isTexture) {
+                  // color textures -> sRGB
+                  if (slot === 'map' || slot === 'emissiveMap' || slot === 'lightMap') {
+                    if ('encoding' in tex) tex.encoding = THREE.sRGBEncoding;
+                  } else {
+                    if ('encoding' in tex) tex.encoding = THREE.LinearEncoding;
+                  }
+                  tex.anisotropy = Math.max(1, maxAniso);
+                  tex.generateMipmaps = true;
+                  tex.minFilter = THREE.LinearMipmapLinearFilter;
+                  tex.magFilter = THREE.LinearFilter;
+                  tex.needsUpdate = true;
+                }
+              });
+              mat.needsUpdate = true;
+            });
+          });
+        })();
+
+        // warm up shaders to avoid first-interaction jank
+        try { renderer.compile(scene, camera); } catch (e) { /* ignore */ }
+
+        isLoaded = true;
+        setTimeout(() => {
+          loaderEl.classList.add('hidden');
+          loaderEl.setAttribute('aria-hidden', 'true');
+        }, 220);
+
+        if ('ontouchstart' in window && window.innerWidth <= 640) {
+          touchHint.style.display = 'block';
+          setTimeout(() => touchHint.style.display = 'none', 3500);
+        }
+      },
+      (progress) => {
+        if (progress.lengthComputable) {
+          const pct = Math.round((progress.loaded / progress.total) * 100);
+          progressBar.style.width = pct + '%';
+          progressLabel.textContent = pct + '%';
+        } else {
+          progressBar.style.width = '60%';
+          progressLabel.textContent = '...';
+        }
+      },
+      (err) => {
+        console.error('Load error', err);
+        progressLabel.textContent = 'Failed to load';
+      }
+    );
+
+    // --- adaptive render scale & sizing (backing buffer scaling) ---
+    let renderScale = MAX_RENDER_SCALE; // dynamic backing buffer scale (0.6..1)
+    let lastFrameTime = performance.now();
+    let paused = false;
+
+    // Update renderer size based on container and renderScale
+    function updateRendererSize() {
+      const rect = container.getBoundingClientRect();
+      const cssW = Math.max(1, Math.floor(rect.width));
+      const cssH = Math.max(1, Math.floor(rect.height));
+
+      // pause if container tiny
+      if (cssW < 120 || cssH < 120) {
+        paused = true;
+        return;
+      } else {
+        paused = false;
+      }
+
+      canvas.style.width = cssW + 'px';
+      canvas.style.height = cssH + 'px';
+
+      const w = Math.max(1, Math.floor(cssW * renderScale));
+      const h = Math.max(1, Math.floor(cssH * renderScale));
+      camera.aspect = cssW / cssH;
+      camera.updateProjectionMatrix();
+
+      // setSize(..., false) changes drawing buffer size only
+      renderer.setSize(w, h, false);
+    }
+    updateRendererSize();
+
+    // ResizeObserver so you can change #viewer in CSS and renderer adapts
+    const ro = new ResizeObserver(() => updateRendererSize());
+    ro.observe(container);
+
+    // Pause if the container not visible (small intersection)
+    let containerVisible = true;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        containerVisible = e.isIntersecting && e.intersectionRatio > 0;
+        if (!containerVisible) paused = true;
+        else paused = false;
+      });
+    }, { threshold: 0.01 });
+    io.observe(container);
+
+    // FPS adaptation
+    const fpsSamples = [];
+    const FPS_WINDOW = 30;
+    function trackAndAdaptFPS(dt) {
+      const fps = dt > 0 ? (1 / dt) * 1.0 : 60;
+      fpsSamples.push(fps);
+      if (fpsSamples.length > FPS_WINDOW) fpsSamples.shift();
+      const avgFps = fpsSamples.reduce((a,b) => a+b, 0) / fpsSamples.length;
+
+      if (avgFps < 35 && renderScale > MIN_RENDER_SCALE) {
+        renderScale = Math.max(MIN_RENDER_SCALE, renderScale - 0.05);
+        updateRendererSize();
+      } else if (avgFps > 50 && renderScale < MAX_RENDER_SCALE) {
+        renderScale = Math.min(MAX_RENDER_SCALE, renderScale + 0.05);
+        updateRendererSize();
+      }
+    }
+
+    // Dynamic throttling target FPS
+    function getTargetFPS() {
+      if (pointerDown || isInteracting) return 60;
+      if (mixer) return 60;
+      if (autoRotate) return 60;
+      return 12;
+    }
+
+    function animate(now) {
+      if (paused || document.hidden) {
+        lastFrameTime = now;
+        return;
+      }
+
+      requestAnimationFrame(animate);
+
+      const targetFPS = getTargetFPS();
+      const minFrameInterval = 1000 / targetFPS;
+      const elapsed = now - lastFrameTime;
+      if (elapsed < minFrameInterval) return;
+
+      const dt = Math.min(0.1, elapsed / 1000);
+      lastFrameTime = now;
+
+      if (!isInteracting && (performance.now() - lastInteraction) > AUTO_RESUME_DELAY) {
+        autoRotate = true;
+      }
+
+      if (autoRotate && !pointerDown && car) pivot.rotation.y += autoDir * autoSpeed * dt;
+      if (mixer) mixer.update(dt);
+
+      trackAndAdaptFPS(dt);
+
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(animate);
+
+    // --- quality boost while interacting (temporary) ---
+    let _savedRenderScale = renderScale;
+    let _savedPixelRatio = renderer.getPixelRatio ? renderer.getPixelRatio() : 1;
+    const HIGH_QUALITY_SCALE = 1.0;
+    const HIGH_QUALITY_PIXELRATIO = Math.min(window.devicePixelRatio || 1, HIGH_QUALITY_PIXELRATIO_CAP);
+    let qualityTimeout = null;
+
+    function boostQualityTemporarily() {
+      // clear pending restore
+      if (qualityTimeout) { clearTimeout(qualityTimeout); qualityTimeout = null; }
+
+      // save current
+      _savedRenderScale = renderScale;
+      _savedPixelRatio = renderer.getPixelRatio ? renderer.getPixelRatio() : 1;
+
+      // set high quality (full backing buffer + increased dpr capped)
+      renderScale = HIGH_QUALITY_SCALE;
+      try { renderer.setPixelRatio(HIGH_QUALITY_PIXELRATIO); } catch (e) {}
+      updateRendererSize();
+
+      // restore after short idle
+      qualityTimeout = setTimeout(() => {
+        renderScale = _savedRenderScale;
+        try { renderer.setPixelRatio(_savedPixelRatio); } catch (e) {}
+        updateRendererSize();
+        qualityTimeout = null;
+      }, 900); // 900ms after last boost
+    }
+
+    // Hook existing userInteracted helper to call boostQualityTemporarily
+    function userInteracted() {
+      autoRotate = false;
+      lastInteraction = performance.now();
+      isInteracting = true;
+      boostQualityTemporarily();
+      setTimeout(() => { isInteracting = false; }, 180);
+    }
+    canvas.addEventListener('pointerdown', userInteracted, { passive: true });
+    canvas.addEventListener('wheel', userInteracted, { passive: true });
+
+    // Pause/resume when tab visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        lastFrameTime = performance.now();
+        requestAnimationFrame(animate);
+      }
+    }, { passive: true });
+
+    // disposal
+    function disposeObject(obj) {
+      obj.traverse((c) => {
+        if (c.isMesh) {
+          if (c.geometry) c.geometry.dispose();
+          if (c.material) {
+            if (Array.isArray(c.material)) c.material.forEach(m => { if (m.map) m.map.dispose(); m.dispose(); });
+            else { if (c.material.map) c.material.map.dispose(); c.material.dispose(); }
+          }
+        }
+      });
+    }
+
+    window.addEventListener('beforeunload', () => {
+      if (car) disposeObject(car);
+      renderer.dispose();
+    }, { passive: true });
+
+    // Minimal external API
+    window.__viewer = {
+      setAutoRotate(v) { autoRotate = !!v; lastInteraction = performance.now(); },
+      setAutoDirection(d) { autoDir = d >= 0 ? 1 : -1; },
+      setSpeed(s) { autoSpeed = Math.max(0, +s); },
+      // allow forcing render scale if you want
+      setRenderScale(s) { renderScale = Math.max(MIN_RENDER_SCALE, Math.min(MAX_RENDER_SCALE, +s)); updateRendererSize(); }
+    };
+  </script>
+
+  <script defer src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"></script>
+</body>
+</html>

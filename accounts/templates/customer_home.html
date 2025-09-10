@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+{% load address_filters %}
+{% block title %} 
+<title>DriveMate - Hire Drivers</title>
+{% endblock %}
+<link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+<script src="/static/js/tailwind.js"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<style type="text/tailwindcss">
+    :root {
+      --primary-color: #000000;
+      --background-color: #f9f9f9;
+      --text-primary: #333333;
+      --text-secondary: #666666;
+      --accent-color: #e0f2f7;
+    }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      
+    }
+    .kbd { background:#111827; color:white; padding:.15rem .5rem; border-radius:.35rem; font-size:.8rem; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  
+    /* cursor for desktop dragging */
+    .draggable { cursor: grab; }
+    .draggable.dragging { cursor: grabbing; user-select: none; }
+  </style>
+</head>
+<body class="bg-[var(--background-color)] text-[var(--text-primary)]">
+<div class="relative flex size-full min-h-screen flex-col group/design-root overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+  <header class="bg-white shadow-sm">
+  <div class="container mx-auto flex items-center justify-between whitespace-nowrap px-6 py-4">
+  <div class="flex items-center gap-3 text-[var(--text-primary)]">
+  <span class="material-symbols-outlined text-3xl text-[var(--primary-color)]">directions_car</span>
+  <h1 class="text-2xl font-bold tracking-tight">DriveMate</h1>
+  </div>
+  <div class="flex items-center gap-4">
+  <button class="relative flex cursor-pointer items-center justify-center rounded-full size-10 hover:bg-gray-100">
+  <span class="material-symbols-outlined text-[var(--text-secondary)]">notifications</span>
+  <div class="absolute top-1 right-1 size-2 rounded-full bg-red-500 border-2 border-white"></div>
+  </button>
+  <a href="{% url 'logout'%}"><button class="relative flex cursor-pointer items-center justify-center rounded-full size-10 hover:bg-gray-100" ><span class="material-symbols-outlined text-[var(--text-secondary)]">logout</span></button></a>
+
+  <a  href="{% url 'customer_profile' %}"><div class="size-10 rounded-full bg-cover bg-center" style='background-image: url("https://static.vecteezy.com/system/resources/thumbnails/004/511/281/small_2x/default-avatar-photo-placeholder-profile-picture-vector.jpg");'></div></a>
+  </div>
+  </div>
+  </header>
+  {% block content %}
+    <main class="container mx-auto px-6 py-8 mb-[60px]">
+    
+
+
+    <div class="flex items-center flex-col mt-4 mb-6">
+      <h1 class="text-2xl font-semibold">Welcome {{ user.name }}</h1>
+      <div class="text-sm text-gray-500">Here are your recent rides and the top-rated vehicles & drivers</div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Left: Recent ride (spans 2 cols on large screens) -->
+      <div class="lg:col-span-2">
+
+          <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+            <div class="p-4 sm:p-6">
+              <div class="flex flex-col sm:flex-row gap-4 sm:gap-6">
+        
+                <!-- Image panel -->
+                <div class="w-full sm:w-40 h-32 sm:h-28 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
+                  {% if recent_vehicle_images and recent_vehicle_images.0.image %}
+                    <img src="{{ recent_vehicle_images.0.image.url }}" alt="{{ recent_vehicle.make }} {{ recent_vehicle.model }}" class="w-full h-full object-cover">
+                  {% else %}
+                    <img src="https://lh3.googleusercontent.com/rd-gg-dl/AJfQ9KT1S28lnQGdtSckQ2vYJ9wDZmcg5X-SXLXofsqgWv2qDJ7UgLCyKXUER6kV_4VtiaOfj5kGS6prPpiIKujbvgHpc3tj2rtjaaA310oNvlaB9UYrAvyE5RY2ZngV0c_zGgzPnYudk2COP9yN1obJY_JrMObt5CZy8RDcAmbDip48JsnjOZJWFoQMRXoBVb9kpBhj8z5YI9ppEUaUXt0THKI2rn4W_9a3-b3d7oTML_FEOr08c4RWJLkegyL7XyoX-4Kj5inu4Vf-rpiKw1-CPKQfjBRaOaYo4yKIQKHgwBY9-lkU_Dj0X7I5lvpLKLyOiTQ_i93N_hiHAJzJzCd_-nLRenlBF_gum4rrnxMQlQ7MIx3pJiJaXm-bSuVczZXY3Ajr_aNEnhK8aKgN2pHf0X9EmrknzmQLLb5zUYmq1H5T3PYj2GOGghDwNCiK_T8TF7bMnSKbmGmChQmzWUAb7CfU7_XilDzcc44NnoQ1s1kN8256tAi0tuoMJuyjjaYYT7zGYmAYPgeJeAD0GvQHjDHGnrmk4csfjTYncQPW27Mqq6rQ-PMdZdu3jruaV033hn8QN-3tFzYJ_zE9KHxFI7UEICaMJbBCUVp3o6mpiuiNgawfJPgD3tYSD3rhuTOrWmj7f97O82znJYP-EW1qlTHxdAg677Lg-3L8tue51wCZfbQkwQKaIGmpmylDaIxppAZMCX3uBWCidoSidmx9Maj5kCD5GeDVut1hOI58MvD_9hDbBmpNG68uJVMPXgAx7Z9PsttIS9TttL88gStocn9phZIw2lfUCMIyZcRyvwVdFRD8MNvuZe_-1B35a48U-xpcJpXOgTM_VhP8ziev8-KWYdrsBLQ_VDDwl1T85tnUApUjzu5fT5vOuZ1mZBfoLaWrJI9POjmcKNNDdoWZ3CRLB9-qMPkZTodn79QBJpFkRfa650U_Np7ue18AYmN-i8taAQqFhio1cyFNtezOgnAqq-IShXFyUsQ_jfscR2QLlSR1VoKoz8dBqygoiUgVoEJnz3rDvBfLV8OjaFcx-_Y1B0S9TnXfC8OJ36iJQpVf_yi7bR_P6l5rZSlWYK9wdwSuS0-EgKRYP7pf0Eyq_rpGkeGWMrG2nZlvm0Q2080dnEhSfhK54j9CejZItNS2oAM2Lv2Eap_15kM0jgHpNKne5vJMqCYzaA2A8HpvRM5ESGzZYXEyR9CiZBwzBY3FDDqZ2tvfvFxd-NbpBU-SPsVagZqmSg6xSyElD1RrLMsfMQCCIFmVbDl4sU9JghbPR3zYrtbE7uOiutAeGY5uaofap2uk7sk0XFKPaoxT_fX6dL21Fw7klXBvY0yGgv4FRmop4hevFsuqoD4-jZNaZJ4gs-05JjFY5vjGo1mjQvjcw=s1024"  alt="trip">
+                  {% endif %}
+                </div>
+        
+                <!-- Details -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm text-gray-500">Most recent ride</div>
+                      <h2 class="text-base sm:text-lg font-semibold mt-1 flex flex-wrap items-center gap-2">
+                        {% if recent_vehicle %}{{ recent_vehicle.make }} {{ recent_vehicle.model }}
+                        
+                        {% else %}  
+                          <span class="truncate">{{ recent_ride.end_location|before_comma }}</span>
+                          <span class="material-symbols-outlined flex-shrink-0" style="font-size:17px;">arrow_forward</span>
+                          <span class="truncate">{{ recent_ride.start_location|before_comma }}</span>
+                        {% endif %}
+                        {% if recent_vehicle and recent_vehicle.registration_number %}
+                          <span class="text-xs text-gray-400 font-medium flex-shrink-0">• {{ recent_vehicle.registration_number }}</span>
+                        {% endif %}
+                      </h2>
+        
+                      <p class="mt-2 text-sm text-gray-600 truncate">Driver: {% if recent_driver %}{{ recent_driver.user.name }}{% else %}Not assigned{% endif %}</p>
+        
+                      <p class="mt-1 text-xs text-gray-400">
+                        <span class="block sm:inline">{{ recent_ride.start_time|date:"M d, Y H:i" }}</span>
+                        {% if recent_ride.end_time %} 
+                          <span class="hidden sm:inline"> — </span>
+                          <span class="block sm:inline">{{ recent_ride.end_time|date:"M d, Y H:i" }}</span>
+                        {% endif %}
+                      </p>
+        
+                      {% if recent_ride.notes %}
+                        <p class="mt-3 text-sm text-gray-500 line-clamp-2">Notes: {{ recent_ride.notes }}</p>
+                      {% endif %}
+                    </div>
+        
+                    <div class="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-3">
+                      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-50 border text-xs text-gray-600 flex-shrink-0">
+                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10h18"/></svg>
+                        <span class="whitespace-nowrap">Completed</span>
+                      </div>
+        
+                      <a href="{% url 'trip_detail' recent_ride.id  %}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border hover:shadow-sm text-sm whitespace-nowrap flex-shrink-0">
+                        <span class="hidden sm:inline">View details</span>
+                        <span class="sm:hidden">Details</span>
+                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+        
+              </div>
+            </div>
+          </div>
+
+
+        <!-- Top rated cars (bigger showcase) -->
+        <div class="mt-6 grid">
+          <div class="bg-white rounded-2xl shadow-md p-5">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-lg font-semibold">Top rated cars</h3>
+              <div class="text-sm text-gray-500">Sorted by rating</div>
+            </div>
+
+
+            <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {% for v in top_vehicles %}
+                <div class="relative border rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-200">
+                  <div id="gallery-{{ v.id }}"
+                  data-autoplay="true"
+                  data-interval="3000"
+                  class="flex overflow-x-auto snap-x snap-mandatory w-full rounded-xl scroll-smooth no-scrollbar touch-pan-x"
+                  style="-webkit-overflow-scrolling: touch;">
+                  {% for img in v.all_images %}
+                    <div class="snap-center flex-shrink-0 w-full h-48 sm:h-56 relative">
+                      <img src="{{ img.image.url }}"
+                          class="w-full h-full object-cover rounded-xl">
+                    </div>
+                  {% endfor %}
+                </div>
+                  <div class="absolute left-0 right-0 bottom-16 p-3 sm:p-4">
+                    <h3 id="veh-{{ v.id }}-title" 
+                      class="text-white text-xl sm:text-2xl lg:text-[28px] font-semibold leading-tight" 
+                      style="text-shadow: 0px 0px 4px rgb(0 0 0);">
+                    {{ v.make }} {{ v.model }}
+                  </h3>
+            
+                  <p class="text-base sm:text-lg lg:text-xl text-gray-300 mt-1">
+                    {{ v.year }} • {{ v.get_vehicle_type_display }}
+                  </p>
+                  </div>
+            
+                  <div class="p-3 sm:p-4">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-xs text-gray-500 mt-1 truncate">{{ v.variant|default:'' }}</p>
+                      </div>
+            
+                      <div class="flex items-center gap-2 flex-shrink-0">
+                        <div class="flex items-center text-sm">
+                          {% if v.avg_score %}
+                            <span class="text-sm font-semibold">{{ v.avg_score|floatformat:1 }}</span>
+                            <svg class="w-4 h-4 ml-1 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                          {% else %}
+                            -★
+                          {% endif %}
+                        </div>
+                        <div class="text-xs text-gray-400">({{ v.ratings_count }})</div>
+                      </div>
+                    </div>
+                    
+                    <div class="flex justify-center">
+                      <ul class="flex flex-wrap gap-1 sm:gap-2 text-xs text-gray-600 justify-center">
+                        <li class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border text-center">
+                          <span class="material-symbols-outlined flex-shrink-0" style="font-size: 14px; margin-right:2px">settings</span>
+                          <span class="font-medium text-gray-800 text-xs sm:text-sm">{{ v.transmission }}</span>
+                        </li>
+                      
+                        <li class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border text-center">
+                          <span class="material-symbols-outlined flex-shrink-0" style="font-size: 14px; margin-right:2px">local_gas_station</span>
+                          <span class="font-medium text-gray-800 text-xs sm:text-sm">{{ v.fuel_type }}</span>
+                        </li>
+                      
+                        <li class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border text-center">
+                          <span class="material-symbols-outlined flex-shrink-0" style="font-size: 14px; margin-right:2px">event_seat</span>
+                          <span class="font-medium text-gray-800 text-xs sm:text-sm">{{ v.seat_capacity }} seats</span>
+                        </li>
+                      
+                        <li class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border text-center">
+                          <span class="material-symbols-outlined flex-shrink-0" style="font-size: 14px; margin-right:2px">ac_unit</span>
+                          <span class="font-medium text-gray-800 text-xs sm:text-sm">{% if v.ac %}AC{% else %}No AC{% endif %}</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              {% empty %}
+                <p class="text-sm text-gray-500">No rated vehicles yet.</p>
+              {% endfor %}
+            </div>
+
+            
+
+          </div>
+
+        
+        </div>
+      </div>
+
+      <!-- Right column: Top drivers -->
+      <aside class="bg-white rounded-2xl shadow-md p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Top rated drivers</h3>
+          <div class="text-sm text-gray-400">Trusted by customers</div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3">
+          {% for driver in top_drivers %}
+            <div class="flex items-center gap-3 p-3 border rounded-lg hover:shadow-sm transition-shadow">
+              <div class="w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center shrink-0">
+                {% if driver.profile_pic %}
+                  <img src="{{ driver.profile_pic.url }}" alt="{{ driver.user.name }}" class="w-full h-full object-cover">
+                {% else %}
+                  <svg class="w-8 h-8 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="3"></circle><path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path></svg>
+                {% endif %}
+              </div>
+
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-medium text-sm">{{ driver.user.name }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{% if driver.assigned_vehicles_prefetched and driver.assigned_vehicles_prefetched.0 %}{{ driver.assigned_vehicles_prefetched.0.make }} {{ driver.assigned_vehicles_prefetched.0.model }}{% endif %}</p>
+                  </div>
+
+                  <div class="text-right">
+                    <div class="text-sm font-semibold">{% if driver.avg_score %}{{ driver.avg_score|floatformat:1 }}★{% else %}-★{% endif %}</div>
+                    <div class="text-xs text-gray-400">({{ driver.ratings_count }})</div>
+                  </div>
+                </div>
+
+                <!-- <div class="mt-2 flex items-center gap-2">
+                  <a href="#" class="text-xs px-3 py-1 rounded-full border">Profile</a>
+                  <a href="#" class="text-xs px-3 py-1 rounded-full bg-indigo-50 hover:bg-indigo-100">Contact</a>
+                </div> -->
+              </div>
+            </div>
+          {% empty %}
+            <p class="text-sm text-gray-500">No rated drivers yet.</p>
+          {% endfor %}
+        </div>
+      </aside>
+
+    </div>
+
+
+    <section>
+    <h2 class="text-2xl font-bold  mt-4 mb-6">Popular Services</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <a href="{% url 'create_ride' %}?mode=driver_only">
+      <div class="group relative overflow-hidden rounded-2xl shadow-lg cursor-pointer">
+        <img alt="Driver on Demand" class="w-full h-64 object-cover transform group-hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbMLkphsqSD_JP0r1Z9QwGSRsoK3skYwwFgAYniOSn_VNBdOKmYnrtX53kjCu3SJb2DcTKf9v6dYy0ioMyikmM8RAHmj0m3z92NzDDlbsysP3oXSMkyZyzxplEU05RmYLqInaliZUU9hSBZyzyTYKfL7IIXHtlAt1t9VL_A-kwAbBW7dWz5PdgsmnmAEnUQ5UupgglaUdejj1wRJeFimM0bIp-SzCE0TrHHp8IOb2kWGDJQP2kZ0oGEk-kwcnLJxq2IxVjJ6fxXg"/>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+        <div class="absolute bottom-0 left-0 p-6">
+        <h3 class="text-white text-2xl font-bold">Driver on Demand</h3>
+        <p class="text-gray-200 mt-1">Hire a professional driver for your own vehicle.</p>
+        </div>
+        </div>
+    </a>
+    <a href="{% url 'create_ride' %}?mode=car_with_driver">
+      <div class="group relative overflow-hidden rounded-2xl shadow-lg cursor-pointer">
+        <img alt="Driver with Vehicle" class="w-full h-64 object-cover transform group-hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5vt-AIhlT4tZ81HQSCsrbHjmU5G76R7JZIID8Vyay8FmR76VZwQFTILJU48KlPGsurEvwyx9-TG5XspSkO65EPJBF_p-Uohhmye4sq7fguFEqnLSlqDBfjx361SazI8nyKHzeNikzu83bwoWeU3TeITAJDyWsB9HkbtxH2M_ZzDlann8Yg3UCA8I8YyP9KoFXMntrgDxfPZ13vNxEbIrHtK_2DtYD5T65IVx5AqhThcudzAgVmXJ5zBSIQGIB3bTghJXX5dJTtg"/>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+        <div class="absolute bottom-0 left-0 p-6">
+        <h3 class="text-white text-2xl font-bold">Driver with Vehicle</h3>
+        <p class="text-gray-200 mt-1">Book a chauffeur service with a luxury vehicle.</p>
+        </div>
+        </div>
+    </a>
+    </div>
+
+
+    <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mt-7 mb-10">
+      <h2 class="text-3xl font-bold mb-6">Book Your Ride</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+      <div class="col-span-1 lg:col-span-2">
+      <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1" for="location">Location</label>
+      <div class="relative">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]">search</span>
+      <input class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]" id="location" placeholder="Enter pickup location" type="text"/>
+      </div>
+      </div>
+      <div>
+      <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1" for="date">Date</label>
+      <input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]" id="date" type="date"/>
+      </div>
+      <div>
+      <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1" for="time">Time</label>
+      <input class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]" id="time" type="time"/>
+      </div>
+      </div>
+      <a href="{% url 'create_ride' %}"><button class="mt-6 w-full md:w-auto bg-[var(--primary-color)] text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] transition-colors duration-300 flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined">directions_car</span>Create Trip</button></a>
+      </div>
+
+
+  </main>
+
+  <footer class=" w-full fixed flex bottom-0 bg-white border-t border-gray-200">
+    <div class="container mx-auto">
+    <nav class="flex justify-around">
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--primary-color)] border-t-2 border-[var(--primary-color)] flex-1" href="{% url 'customer_dashboard'%}">
+    <span class="material-symbols-outlined">home</span>
+    <span class="text-xs font-bold">Home</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--text-secondary)] hover:text-[var(--primary-color)] flex-1" href="{% url 'my_trips'%}">
+    <span class="material-symbols-outlined">local_taxi</span>
+    <span class="text-xs font-bold">Ride</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--text-secondary)] hover:text-[var(--primary-color)] flex-1" href="{% url 'customer_profile' %}">
+    <span class="material-symbols-outlined">person</span>
+    <span class="text-xs font-bold">Profile</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--text-secondary)] hover:text-[var(--primary-color)] flex-1" href="{% url 'customer_payment_history'%}">
+    <span class="material-symbols-outlined">payment</span>
+    <span class="text-xs font-bold">Payments</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--text-secondary)] hover:text-[var(--primary-color)] flex-1" href="#under-development">
+    <span class="material-symbols-outlined">support_agent</span>
+    <span class="text-xs font-bold">Support</span>
+    </a>
+    </nav>
+    </div>
+    </footer>
+    {% endblock %}
+</div>
+</div>
+<script>
+  (function(){
+    const galleries = {}; // store state per gallery id
+  
+    function initGallery(gallery) {
+      const id = gallery.id.split('-')[1];
+      const slidesCount = gallery.children.length;
+      if (!id || slidesCount <= 0) return;
+  
+      const autoplayEnabled = gallery.dataset.autoplay === 'true';
+      const intervalMs = parseInt(gallery.dataset.interval || '3000', 10);
+  
+      // state
+      galleries[id] = {
+        el: gallery,
+        slides: slidesCount,
+        index: 0,
+        autoplayEnabled,
+        intervalMs,
+        autoplayTimer: null,
+        idleTimer: null,
+        userInteracted: false,
+        isDragging: false,
+        dragStartX: 0,
+        dragStartScroll: 0
+      };
+  
+      const state = galleries[id];
+      gallery.classList.add('draggable');
+  
+      // sync initial dots
+      updateDots(id);
+  
+      // scroll listener to update index & dots when user swipes
+      let ticking = false;
+      gallery.addEventListener('scroll', () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          const newIndex = Math.round(gallery.scrollLeft / gallery.offsetWidth);
+          if (newIndex !== state.index) {
+            state.index = newIndex;
+            updateDots(id);
+          }
+          ticking = false;
+        });
+      }, { passive: true });
+  
+      // pointer events: only implement custom drag for mouse/pen (desktop).
+      gallery.addEventListener('pointerdown', (e) => {
+        // if touch, do not hijack (let native swipe handle)
+        if (e.pointerType === 'touch') {
+          pauseAutoplay(id); // still pause autoplay on touch
+          return;
+        }
+        // mouse/pen -> implement drag
+        state.isDragging = true;
+        state.dragStartX = e.clientX;
+        state.dragStartScroll = gallery.scrollLeft;
+        gallery.setPointerCapture(e.pointerId);
+        gallery.classList.add('dragging');
+        pauseAutoplay(id);
+      });
+  
+      gallery.addEventListener('pointermove', (e) => {
+        if (!state.isDragging) return;
+        const dx = e.clientX - state.dragStartX;
+        gallery.scrollLeft = state.dragStartScroll - dx;
+      });
+  
+      const endDrag = (e) => {
+        if (!state.isDragging) return;
+        state.isDragging = false;
+        gallery.classList.remove('dragging');
+        // snap to nearest slide
+        const idx = Math.round(gallery.scrollLeft / gallery.offsetWidth);
+        state.index = Math.max(0, Math.min(state.slides - 1, idx));
+        gallery.scrollTo({ left: gallery.offsetWidth * state.index, behavior: 'smooth' });
+        resumeAutoplayWithDelay(id);
+      };
+  
+      gallery.addEventListener('pointerup', endDrag);
+      gallery.addEventListener('pointercancel', endDrag);
+      gallery.addEventListener('mouseleave', (e) => {
+        // if pointer leaves while dragging with mouse, also end drag
+        if (state.isDragging && e.relatedTarget === null) endDrag(e);
+      });
+  
+      // pause on hover for desktop
+      gallery.addEventListener('mouseenter', () => pauseAutoplay(id));
+      gallery.addEventListener('mouseleave', () => resumeAutoplayWithDelay(id));
+  
+      // pause on touchstart (mobile) and resume after delay
+      gallery.addEventListener('touchstart', () => pauseAutoplay(id), { passive: true });
+      gallery.addEventListener('touchend', () => resumeAutoplayWithDelay(id), { passive: true });
+  
+      // clickable dots: already implemented as buttons that call goToSlide()
+      // visibility change: pause when tab hidden
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) pauseAutoplay(id);
+        else resumeAutoplayWithDelay(id);
+      });
+  
+      // start autoplay if enabled
+      if (autoplayEnabled && slidesCount > 1) startAutoplay(id);
+      // keep correct position on resize
+      window.addEventListener('resize', () => {
+        gallery.scrollTo({ left: gallery.offsetWidth * state.index, behavior: 'auto' });
+      });
+    }
+  
+    // change slide (for prev/next buttons)
+    function changeSlide(rideId, direction) {
+      const s = galleries[rideId];
+      if (!s) return;
+      s.index = (s.index + direction + s.slides) % s.slides;
+      s.el.scrollTo({ left: s.el.offsetWidth * s.index, behavior: 'smooth' });
+      updateDots(rideId);
+      resetAutoplayDueToUser(rideId);
+    }
+  
+    // go to specific slide (dots)
+    function goToSlide(rideId, index) {
+      const s = galleries[rideId];
+      if (!s) return;
+      s.index = Math.max(0, Math.min(s.slides - 1, index));
+      s.el.scrollTo({ left: s.el.offsetWidth * s.index, behavior: 'smooth' });
+      updateDots(rideId);
+      resetAutoplayDueToUser(rideId);
+    }
+  
+    // update dots visuals
+    function updateDots(rideId) {
+      const s = galleries[rideId];
+      if (!s) return;
+      const dots = document.querySelectorAll(`.dot-${rideId}`);
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('bg-gray-800', i === s.index);
+        dot.classList.toggle('bg-gray-300', i !== s.index);
+      });
+    }
+  
+    // autoplay helpers
+    function startAutoplay(rideId) {
+      const s = galleries[rideId];
+      if (!s || !s.autoplayEnabled) return;
+      if (s.autoplayTimer) clearInterval(s.autoplayTimer);
+      s.autoplayTimer = setInterval(() => {
+        // advance by 1
+        s.index = (s.index + 1) % s.slides;
+        s.el.scrollTo({ left: s.el.offsetWidth * s.index, behavior: 'smooth' });
+        updateDots(rideId);
+      }, s.intervalMs);
+    }
+  
+    function stopAutoplay(rideId) {
+      const s = galleries[rideId];
+      if (!s) return;
+      if (s.autoplayTimer) {
+        clearInterval(s.autoplayTimer);
+        s.autoplayTimer = null;
+      }
+    }
+  
+    function pauseAutoplay(rideId) {
+      const s = galleries[rideId];
+      if (!s) return;
+      s.userInteracted = true;
+      stopAutoplay(rideId);
+      // clear pending resume timer
+      if (s.idleTimer) { clearTimeout(s.idleTimer); s.idleTimer = null; }
+    }
+  
+    function resumeAutoplayWithDelay(rideId, delay = 3000) {
+      const s = galleries[rideId];
+      if (!s) return;
+      // after user stops interacting, wait `delay` ms then resume
+      if (s.idleTimer) clearTimeout(s.idleTimer);
+      s.idleTimer = setTimeout(() => {
+        s.userInteracted = false;
+        startAutoplay(rideId);
+        s.idleTimer = null;
+      }, delay);
+    }
+  
+    function resetAutoplayDueToUser(rideId) {
+      pauseAutoplay(rideId);
+      resumeAutoplayWithDelay(rideId, 3000);
+    }
+  
+    // expose functions to global so buttons/dot onclick can call
+    window.changeSlide = changeSlide;
+    window.goToSlide = goToSlide;
+  
+    // init all galleries once dom ready
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('[id^="gallery-"]').forEach(gallery => initGallery(gallery));
+    });
+  
+    // Also expose an init function in case you dynamically inject galleries later
+    window.__DriveMateGallery = { initGallery };
+  
+  })();
+  </script>
+</body></html>

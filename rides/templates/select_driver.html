@@ -1,0 +1,411 @@
+<!-- select_driver.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Select Driver — DriveMate</title>
+
+  <!-- Tailwind (keep same version you already use if needed) -->
+<!-- Preconnect for faster Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<!-- Load Fonts & Icons (high priority) -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+
+<script src="/static/tailwind.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <style>
+
+  .car-hero { object-position: center; border-bottom-left-radius: 0.75rem; border-bottom-right-radius: 0.75rem; }
+  /* if you use line-clamp, ensure plugin enabled in Tailwind; fallback: limit height on small screens */
+  @media (max-width: 640px) {
+    .car-hero { height: 12rem; }
+  }
+  .driver-hero { object-position: center; border-bottom-left-radius: 0.75rem; border-bottom-right-radius: 0.75rem; }
+  /* if you use line-clamp, ensure plugin enabled in Tailwind; fallback: limit height on small screens */
+  @media (max-width: 640px) {
+    .driver-hero { height: 20rem; }
+  }
+
+    :root{
+      --primary-color: #3d99f5;
+      --accent: #e0f2f7;
+      --bg: #f8fafc;
+      --muted: #6b7280;
+    }
+    body { font-family: 'Space Grotesk', sans-serif; background: var(--bg); color: #111827; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    /* subtle card glass */
+    .card-glass { background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.75)); backdrop-filter: blur(6px); }
+    /* rating star */
+    .star { width: 16px; height: 16px; display:inline-block; vertical-align:middle; margin-right:3px; }
+    /* car image hero aspect */
+    .car-hero { height: 180px; object-fit: cover; width: 100%; border-radius: 0.75rem; }
+  </style>
+</head>
+<body class="antialiased">
+
+  <!-- Header (DriveMate style) -->
+  <header class="bg-white shadow-sm">
+    <div class="container mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-3xl" style="color:var(--primary-color)">directions_car</span>
+        <h1 class="text-2xl font-bold tracking-tight">DriveMate</h1>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <button class="relative flex items-center justify-center rounded-full p-2 hover:bg-gray-100">
+          <span class="material-symbols-outlined text-[var(--muted)]">notifications</span>
+          <div class="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border-2 border-white"></div>
+        </button>
+
+        <a href="{% url 'logout' %}" title="Logout">
+          <button class="relative flex items-center justify-center rounded-full p-2 hover:bg-gray-100">
+            <span class="material-symbols-outlined text-[var(--muted)]">logout</span>
+          </button>
+        </a>
+
+        <div class="w-10 h-10 rounded-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDdkA3Ggv-0sgfcnqNBA1xGTE-uxiAhRNBRuS6tkNshCYBH7HKqV4FA-vaAkWDxD41YFKpOyM3F3tGXH5aclyf0OXXGKuqtYD5nwfLB954LJk9XbFgWmTf3_-0CEwccFOp9tY6r1lexo1Of8M9MnVEVgFo0dO0BXcGEKhaAqxdCmJtIUt7p-Vmscr83E92Y7WFDdXPogFGLz_OvViuW3yl_YxvVhdz0wXUGCOnwVW1CjN_MqY2_jS-1PT2fo4nnQXYZu5Pj8BH-rA');"></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-6 py-8">
+
+    <!-- Page Intro / Hero -->
+    <section class="mb-8">
+      <div class="bg-white rounded-2xl card-glass shadow-lg p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-6">
+        <div class="flex-1">
+          <h2 class="text-3xl font-bold mb-2">Select a Driver for Ride #{{ ride.id }}</h2>
+          <p class="text-sm text-gray-600">Choose from trusted drivers or chauffeur-driven vehicles — view rich profiles, ratings & photos before requesting.</p>
+        </div>
+
+        <div class="w-full md:w-auto flex gap-3">
+          <a href="{% url 'my_trips' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50">
+            <span class="material-symbols-outlined">history</span> My Trips
+          </a>
+          <a href="{% url 'customer_profile' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--primary-color)] text-white shadow hover:shadow-md">
+            <span class="material-symbols-outlined">person</span> Profile
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Messages -->
+    {% if messages %}
+      <div class="mb-6">
+        {% for message in messages %}
+          <div class="rounded-lg p-4 mb-3
+              {% if message.tags == 'error' %}
+                bg-red-50 border border-red-200 text-red-800
+              {% else %}
+                bg-emerald-50 border border-emerald-200 text-emerald-800
+              {% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Filters Panel -->
+    <form method="GET" class="mb-8">
+      <div class="bg-white rounded-2xl shadow-lg p-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        {% if ride_mode == 'car_with_driver' %}
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-2">Vehicle Type</label>
+            <select name="vehicle_type" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+              <option value="">Any</option>
+              {% for type, display in vehicle_types %}
+                <option value="{{ type }}" {% if filters.vehicle_type == type %}selected{% endif %}>{{ display }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-2">Transmission</label>
+            <select name="transmission" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+              <option value="">Any</option>
+              {% for trans, display in transmissions %}
+                <option value="{{ trans }}" {% if filters.transmission == trans %}selected{% endif %}>{{ display }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-2">Fuel Type</label>
+            <select name="fuel_type" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+              <option value="">Any</option>
+              {% for fuel, display in fuel_types %}
+                <option value="{{ fuel }}" {% if filters.fuel_type == fuel %}selected{% endif %}>{{ display }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-2">Minimum Rating</label>
+          <input type="number" name="min_rating" step="0.1" min="0" max="5" value="{{ filters.min_rating|default:'0' }}" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]">
+        </div>
+
+        <div class="md:col-span-4 flex justify-end">
+          <button type="submit" class="inline-flex items-center gap-2 bg-[var(--primary-color)] hover:bg-blue-600 text-white font-semibold px-5 py-3 rounded-lg shadow transition">
+            <span class="material-symbols-outlined">filter_list</span> Apply Filters
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Drivers / Vehicles Grid -->
+    <section>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
+        {% if ride_mode == 'driver_only' %}
+          {% for driver in drivers %}
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+              <div class="relative">
+                {% if driver.profile_pic %}
+                  <img src="{{ driver.profile_pic.url }}" alt="Driver {{ driver.user.name }}" title="Driver {{ driver.user.name }}" class="w-full max-h-[340px] object-cover driver-hero">
+                {% else %}
+                  <!-- attractive default car/driver hero -->
+                  <img src="https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=1350&q=80" alt="driver-hero" class="w-full h-48 object-cover driver-hero">
+                {% endif %}
+                <div class="absolute left-4 top-4 bg-white bg-opacity-80 px-3 py-1 rounded-full text-sm font-semibold shadow">
+                  {{ driver.rating|floatformat:1 }} ★
+                </div>
+                <div class="absolute right-4 top-4 bg-white bg-opacity-80 px-3 py-1 rounded-full text-sm font-medium shadow text-gray-700">
+                  {{ driver.experience_years }} years of experience
+                </div>
+              </div>
+
+              <div class="p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-lg font-semibold">{{ driver.user.name }}</h3>
+                    <p class="text-sm text-gray-500">{{ driver.license_number }}</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm text-gray-600">Last active</p>
+                    <p class="text-xs text-gray-400">{{ driver.last_active|default:"-" }}</p>
+                  </div>
+                </div>
+
+                <div class="mt-4 flex items-center gap-3">
+                  <button class="view-details inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50" data-driver-id="{{ driver.id }}">
+                    <span class="material-symbols-outlined">visibility</span> View Profile
+                  </button>
+
+                  {% if driver.already_requested %}
+                    <span class="ml-auto inline-block px-3 py-2 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-700">Already Requested</span>
+                  {% else %}
+                    <form method="POST" class="ml-auto">
+                      {% csrf_token %}
+                      <input type="hidden" name="driver_id" value="{{ driver.id }}">
+                      <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition">
+                        <span class="material-symbols-outlined">person_add</span> Request
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+
+
+          <!-- Vehicles grid wrapper (responsive) -->
+        {% for vehicle in vehicles %}
+          <article
+            class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transform transition will-change-transform duration-300 ease-out hover:-translate-y-2"
+            aria-labelledby="veh-{{ vehicle.id }}-title"
+          >
+            <div class="relative">
+              {% with vehicle.images.all|first as imgfirst %}
+                {% if imgfirst %}
+                  <img
+                    src="{{ imgfirst.image.url }}"
+                    alt="{{ vehicle.make }} {{ vehicle.model }}"
+                    class="w-full h-52 sm:h-44 md:h-48 object-cover car-hero transition-transform duration-500 ease-out group-hover:scale-105"
+                    loading="lazy"
+                  >
+                {% else %}
+                  <img
+                    src="https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1350&q=80"
+                    alt="vehicle-hero"
+                    class="w-full h-52 sm:h-44 md:h-48 object-cover car-hero transition-transform duration-500 ease-out group-hover:scale-105"
+                    loading="lazy"
+                  >
+                {% endif %}
+              {% endwith %}
+
+              <!-- Top-right small rating badge -->
+              <div class="absolute right-4 top-4 bg-white/85 backdrop-blur-sm px-3 py-1 rounded-full shadow text-sm font-medium flex items-center gap-2 ring-1 ring-white/60">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .587l3.668 7.431L23.4 9.75l-5.701 5.562L19.336 24 12 20.202 4.664 24l1.637-8.688L.6 9.75l7.732-1.732L12 .587z"/></svg>
+                <span class="text-gray-800">{{ vehicle.driver.rating|floatformat:1 }}</span>
+              </div>
+
+              <!-- bottom gradient + title -->
+              <div class="absolute left-0 right-0 bottom-0 p-1  bg-[#000000a2]"  style="background-color: #00000063;">
+                <h3 id="veh-{{ vehicle.id }}-title" class="text-white text-lg font-semibold leading-tight" >
+                  {{ vehicle.make }} {{ vehicle.model }}
+                </h3>
+                <p class="text-sm text-gray-200 mt-1">{{ vehicle.year }} • {{ vehicle.get_vehicle_type_display }}</p>
+              </div>
+            </div>
+
+            <div class="p-4 space-y-3">
+              <!-- key specs row -->
+              <ul class="flex flex-wrap gap-2 text-xs text-gray-600">
+                <li class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border">
+                  <span class="material-symbols-outlined " style="font-size: 17px; margin-right:3px">settings</span>
+                  <span class="font-medium text-gray-800">{{ vehicle.get_transmission_display }}</span>
+                </li>
+              
+                <li class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border">
+                  <span class="material-symbols-outlined " style="font-size: 17px; margin-right:3px">local_gas_station</span>
+                  <span class="font-medium text-gray-800">{{ vehicle.get_fuel_type_display }}</span>
+                </li>
+              
+                <li class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border">
+                  <span class="material-symbols-outlined " style="font-size: 17px; margin-right:3px">event_seat</span>
+                  <span class="font-medium text-gray-800">{{ vehicle.seat_capacity }} seats</span>
+                </li>
+              
+                <li class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md border">
+                  <span class="material-symbols-outlined " style="font-size: 17px; margin-right:3px">ac_unit</span>
+                  <span class="font-medium text-gray-800">{% if vehicle.ac %}AC{% else %}No AC{% endif %}</span>
+                </li>
+              </ul>
+              
+
+              <!-- description/metainfo area (keeps layout consistent even when short) -->
+              <p class="text-sm text-gray-600 line-clamp-2">
+                {% if vehicle.description %}{{ vehicle.description|truncatechars:120 }}{% else %}Well-maintained vehicle with verified driver and regular servicing.{% endif %}
+              </p>
+
+              <!-- action row -->
+              <div class="flex items-center gap-3">
+                <button
+                  class="view-details inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-800 shadow-sm transition-transform transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  data-driver-id="{{ vehicle.driver.id }}"
+                  aria-label="View driver for {{ vehicle.make }} {{ vehicle.model }}"
+                >
+                  <span class="material-symbols-outlined">account_circle</span>
+                  <span class="text-sm font-medium">Driver</span>
+                </button>
+
+                <div class="ml-auto flex items-center gap-2">
+                  {% if vehicle.already_requested %}
+                    <span class="px-3 py-2 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm font-semibold">Already Requested</span>
+                  {% else %}
+                    <form method="POST">
+                      {% csrf_token %}
+                      <input type="hidden" name="driver_id" value="{{ vehicle.driver.id }}">
+                      <button type="submit"
+                              class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-black text-white font-semibold shadow-md  transition-transform transform hover:-translate-y-0.5"
+                      >
+                        <span class="material-symbols-outlined">drive_eta</span>
+                        <span>Request Vehicle</span>
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+
+
+
+        {% endif %}
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer (sticky) -->
+  <footer class=" w-full fixed flex bottom-0 bg-white border-t border-gray-200">
+    <div class="container mx-auto">
+      <nav class="flex justify-around">
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--muted)] hover:text-[var(--primary-color)] flex-1" href="{% url 'customer_dashboard'%}">
+          <span class="material-symbols-outlined">home</span>
+          <span class="text-xs font-bold">Home</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--primary-color)] border-t-2 border-[var(--primary-color)] flex-1" href="{% url 'my_trips'%}">
+          <span class="material-symbols-outlined">local_taxi</span>
+          <span class="text-xs font-bold">Ride</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--muted)] hover:text-[var(--primary-color)] flex-1" href="{% url 'customer_profile' %}">
+          <span class="material-symbols-outlined">person</span>
+          <span class="text-xs font-bold">Profile</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--muted)] hover:text-[var(--primary-color)] flex-1" href="{% url 'customer_payment_history'%}">
+          <span class="material-symbols-outlined">payment</span>
+          <span class="text-xs font-bold">Payments</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--muted)] hover:text-[var(--primary-color)] flex-1" href="#">
+          <span class="material-symbols-outlined">support_agent</span>
+          <span class="text-xs font-bold">Support</span>
+        </a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- Driver Details Modal (enhanced) -->
+  <div id="driverModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 transform transition-transform duration-300 scale-100">
+      <div class="flex items-start justify-between">
+        <h2 id="modalTitle" class="text-xl font-bold"></h2>
+        <button id="closeModal" class="text-gray-500 hover:text-gray-700"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div id="modalContent" class="mt-4 text-gray-700"></div>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function() {
+      $('.view-details').click(function() {
+        const driverId = $(this).data('driver-id');
+        if (!driverId) return alert('Driver id missing');
+
+        $.get(`/driver/${driverId}/`, function(data) {
+          if (data.error) {
+            alert(data.error);
+            return;
+          }
+          $('#modalTitle').text(data.name + ' — Profile');
+          let content = `
+            <div class="flex gap-4">
+              <div class="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0">
+                ${data.profile_pic ? `<img src="${data.profile_pic}" alt="Profile" class="w-full h-full object-cover">` : `<img src="https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=800&q=60" alt="profile" class="w-full h-full object-cover">`}
+              </div>
+              <div>
+                <p class="text-sm"><strong>Rating:</strong> ${data.rating.toFixed(1)} / 5</p>
+                <p class="text-sm"><strong>Experience:</strong> ${data.experience_years} years</p>
+                <p class="text-sm"><strong>License:</strong> ${data.license_number}</p>
+                <p class="text-sm"><strong>About:</strong> ${data.bio ? data.bio : '-'}</p>
+              </div>
+            </div>
+          `;
+          $('#modalContent').html(content);
+          $('#driverModal').removeClass('hidden');
+        }).fail(function() {
+          alert('Failed to load driver details.');
+        });
+      });
+
+      $('#closeModal').click(function() {
+        $('#driverModal').addClass('hidden');
+      });
+
+      // close modal when clicking outside content
+      $('#driverModal').on('click', function(e){
+        if (e.target === this) $(this).addClass('hidden');
+      });
+    });
+  </script>
+</body>
+</html>

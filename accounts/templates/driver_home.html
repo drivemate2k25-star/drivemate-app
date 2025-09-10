@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DriveMate - Driver Home</title>
+<link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+<script src="/static/js/tailwind.js"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+{% load address_filters %}
+<style type="text/tailwindcss">
+  :root {
+    --primary-color: #3d99f5;
+    --secondary-color: #f0f2f4;
+    --background-color: #f9f9f9;
+    --text-primary: #111418;
+    --text-secondary: #637488;
+    --accent-color: #e0e7ff;
+  }
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-primary);
+  }
+  .truncate{
+    max-width: 245px;
+  }
+
+  /* Small helper to ensure avatar boxes keep aspect ratio across screen sizes */
+  .size-12 { width: 48px; height: 48px; }
+</style>
+</head>
+<body class="antialiased">
+
+  <!-- Mobile top bar (only visible on small screens) -->
+  <div class="md:hidden fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b">
+    <div class="flex items-center justify-between px-4 py-3">
+      <div class="flex items-center gap-3">
+        <button id="menuBtn" aria-label="Open menu" class="p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring">
+          <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <div class="flex items-center gap-2">
+          <div class="bg-center bg-no-repeat bg-cover rounded-full size-12" style='background-image: url("{{driver.profile_pic.url}}");'></div>
+          <div class="text-sm font-medium">{{driver.user.name}}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- quick status indicator -->
+        <span class="text-sm font-medium text-green-500 hidden sm:inline">Available</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- overlay for mobile sidebar -->
+  <div id="overlay" class="fixed inset-0 bg-black bg-opacity-40 z-40 hidden md:hidden"></div>
+
+  <div class="flex min-h-screen bg-[var(--background-color)] pt-0 md:pt-0">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white p-6 flex flex-col justify-between shadow-lg transform -translate-x-full transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:shadow-none">
+      <div>
+        <div class="flex items-center gap-3 mb-8">
+          <div title="{{driver.user.name}}" class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12" style='background-image: url("{{driver.profile_pic.url}}");'></div>
+          <h1 class="text-[var(--text-primary)] text-lg font-bold">{{driver.user.name}}</h1>
+        </div>
+        <nav class="flex flex-col gap-2">
+          <a class="flex items-center gap-3 px-4 py-3 rounded-lg {% block home_active %}  bg-[var(--accent-color)] text-[var(--primary-color)] font-semibold{% endblock %}" href="{% url 'driver_dashboard' %}">
+            <svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+              <path d="M224,115.55V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V168a8,8,0,0,0-8-8H112a8,8,0,0,0-8,8v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V115.55a16,16,0,0,1,5.17-11.78l80-75.48.11-.11a16,16,0,0,1,21.53,0,1.14,1.14,0,0,0,.11.11l80,75.48A16,16,0,0,1,224,115.55Z"></path>
+            </svg>
+            <span>Home</span>
+          </a>
+          <a class="flex items-center gap-3 px-4 py-3 rounded-lg {% block earnings_active %}{% endblock %}" href="{% url 'driver_payment_history' %}">
+            <svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+              <path d="M152,120H136V56h8a32,32,0,0,1,32,32,8,8,0,0,0,16,0,48.05,48.05,0,0,0-48-48h-8V24a8,8,0,0,0-16,0V40h-8a48,48,0,0,0,0,96h8v64H104a32,32,0,0,1-32-32,8,8,0,0,0-16,0,48.05,48.05,0,0,0,48,48h16v16a8,8,0,0,0,16,0V216h16a48,48,0,0,0,0-96Zm-40,0a32,32,0,0,1,0-64h8v64Zm40,80H136V136h16a32,32,0,0,1,0,64Z"></path>
+            </svg>
+            <span>Earnings</span>
+          </a>
+          <a class="flex items-center gap-3 px-4 py-3 rounded-lg {% block requests_active %}{% endblock %}" href="{% url 'driver_requests_list' %}">
+            <svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+              <path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"></path>
+            </svg>
+            <span>requests</span>
+          </a>
+          <a class="flex items-center gap-3 px-4 py-3 rounded-lg {% block profile_active %}{% endblock %}" href="{% url 'driver_profile' %}">
+            <svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+              <path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"></path>
+            </svg>
+            <span>Profile</span>
+          </a>
+
+          <a class="flex items-center gap-3 px-4 py-3 rounded-lg " href="{% url 'logout' %}">
+            <svg  height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path opacity="1" d="M12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+              <path d="M10 12H20M20 12L17 9M20 12L17 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            <span>Logout</span>
+          </a>
+        </nav>
+      </div>
+
+      <div>
+        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--secondary-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium" href="#">
+          <svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+            <path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z"></path>
+          </svg>
+          <span>Settings</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 p-1 md:p-8 pt-20 md:pt-8">
+      {% block content %}
+
+      <header class="mb-8">
+        <h1 class="text-3xl font-bold text-[var(--text-primary)]">Welcome back, {{user.name}}</h1>
+      </header>
+
+      <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h2 class="text-xl font-semibold text-[var(--text-primary)]">Availability Status</h2>
+      
+          <!-- right side: text + toggle -->
+          <div class="flex items-center gap-4">
+            <span id="availability-text" class="text-lg font-medium">
+              {% if driver.is_available %} Available {% else %} Unavailable {% endif %}
+            </span>
+      
+            <label
+              class="relative flex h-8 w-14 cursor-pointer items-center rounded-full {% if driver.is_available %}bg-[var(--primary-color)]{% else %}bg-[var(--secondary-color)]{% endif %} transition-colors"
+            >
+              <span
+                id="toggle-knob"
+                class="absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ease-in-out"
+                style="{% if driver.is_available %}transform: translateX(1.5rem);{% endif %}"
+              ></span>
+              <input id="availability-toggle" class="sr-only" type="checkbox" {% if driver.is_available %}checked{% endif %} />
+            </label>
+          </div>
+        </div>
+      </section>
+      
+      <section class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] mb-6">Upcoming Drives</h2>
+      
+        <div class="space-y-4">
+          {% if ride_requests.exists %}
+            {% for req in ride_requests %}
+              <!-- card: stacks vertically on small, inline on sm+ -->
+              <div
+                class="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-[var(--secondary-color)] transition-colors"
+              >
+                <!-- left column: text (allow truncation) -->
+                <div class="flex-1 min-w-0">
+                  <p class="text-lg font-medium text-[var(--text-primary)] truncate">
+                    {% if req.ride.start_location %}
+                      {{ req.ride.start_location }}
+                    {% else %}
+                      Pickup location
+                    {% endif %}
+                  </p>
+      
+                  <p class="text-sm text-[var(--text-secondary)]">
+                    {% if req.ride.start_time and req.ride.end_time %}
+                      {{ req.ride.start_time|date:"g:i A" }} - {{ req.ride.end_time|date:"g:i A" }}
+                    {% elif req.ride.start_time %}
+                      {{ req.ride.start_time|date:"g:i A" }}
+                    {% else %}
+                      Time not set
+                    {% endif %}
+                  </p>
+                </div>
+      
+                <!-- actions: stacked full-width on mobile, inline on sm+ -->
+                <div class="mt-3 sm:mt-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <a
+                    href="{% url 'driver_request_detail' req.pk %}"
+                    class="w-full sm:w-auto bg-white border border-gray-200 text-[var(--text-primary)] rounded-lg px-4 py-2 text-sm font-semibold hover:opacity-95 transition-colors shadow text-center"
+                  >
+                    View Details
+                  </a>
+      
+                  {% if has_active_ride %}
+                    <button
+                      class="w-full sm:w-auto inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-not-allowed opacity-70 justify-center"
+                      disabled
+                      title="You're currently on a trip"
+                    >
+                      <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+                      Accept (busy)
+                    </button>
+                  {% else %}
+                    <form method="post" action="{% url 'accept_ride_request' req.pk %}" class="w-full sm:w-auto inline">
+                      {% csrf_token %}
+                      <button
+                        type="submit"
+                        onclick="return confirm('Accept this ride? This will cancel other driver requests for this ride.')"
+                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm bg-[var(--accent-color)] text-[var(--primary-color)] shadow hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[var(--accent-color)]"
+                      >
+                        <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                        Accept
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="rounded-2xl p-6 bg-white/80 shadow border border-gray-100 text-center">
+              <p class="text-gray-600">No pending ride requests at the moment. You're free for now — enjoy the break 😊</p>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+      
+
+      {% endblock %}
+    </main>
+  </div>
+
+  <script>
+    // Mobile sidebar toggle
+    (function () {
+      const menuBtn = document.getElementById('menuBtn');
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+
+      function openSidebar() {
+        sidebar.classList.remove('-translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        overlay.classList.remove('hidden');
+        // prevent body scroll
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeSidebar() {
+        sidebar.classList.remove('translate-x-0');
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+      }
+
+      menuBtn && menuBtn.addEventListener('click', function () {
+        if (sidebar.classList.contains('-translate-x-full')) {
+          openSidebar();
+        } else {
+          closeSidebar();
+        }
+      });
+
+      overlay && overlay.addEventListener('click', closeSidebar);
+
+      // close on ESC key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeSidebar();
+      });
+
+      // ensure correct state on resize (so the sidebar isn't stuck hidden on desktop)
+      window.addEventListener('resize', function () {
+        if (window.innerWidth >= 768) {
+          // force visible on md+
+          sidebar.classList.remove('-translate-x-full');
+          sidebar.classList.remove('translate-x-0');
+          overlay.classList.add('hidden');
+          document.documentElement.style.overflow = '';
+          document.body.style.overflow = '';
+        } else {
+          // mobile default: hidden
+          if (!sidebar.classList.contains('-translate-x-full') && !sidebar.classList.contains('translate-x-0')) {
+            sidebar.classList.add('-translate-x-full');
+          }
+        }
+      });
+    })();
+  </script>
+  <script>
+    // get CSRF token from cookie (standard Django cookie name 'csrftoken')
+    function getCookie(name) {
+      const v = document.cookie.split("; ").find(row => row.startsWith(name + "="));
+      return v ? decodeURIComponent(v.split("=")[1]) : null;
+    }
+  
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggle = document.getElementById("availability-toggle");
+      const text = document.getElementById("availability-text");
+      const knob = document.getElementById("toggle-knob");
+      const label = toggle.closest("label"); // ✅ added
+  
+      function setUI(available) {
+        text.textContent = available ? "Available" : "Unavailable";
+  
+        // knob animation
+        knob.style.transform = available ? "translateX(1.5rem)" : "translateX(0)";
+  
+        // background color (this was missing)
+        label.classList.toggle("bg-[var(--primary-color)]", available);
+        label.classList.toggle("bg-[var(--secondary-color)]", !available);
+      }
+  
+      toggle.addEventListener("change", async (e) => {
+        const newState = e.target.checked;
+        const csrfToken = getCookie("csrftoken");
+  
+        // optimistic update
+        setUI(newState);
+  
+        try {
+          const res = await fetch("{% url 'api_toggle_availability' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken,
+            },
+            body: JSON.stringify({ is_available: newState }),
+          });
+  
+          const data = await res.json();
+  
+          if (!res.ok || !data.success) {
+            throw data;
+          }
+  
+          // sync with backend response
+          setUI(Boolean(data.is_available));
+          toggle.checked = Boolean(data.is_available);
+        } catch (err) {
+          alert("Could not update availability. Please try again.");
+          toggle.checked = !newState;
+          setUI(!newState);
+          console.error("Availability update failed:", err);
+        }
+      });
+    });
+  </script>
+  
+</body></html>

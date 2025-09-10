@@ -1,0 +1,2 @@
+pip install django[argon2]
+pip install django[spatialite]  

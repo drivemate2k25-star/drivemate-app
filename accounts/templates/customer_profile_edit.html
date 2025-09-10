@@ -1,0 +1,100 @@
+{% extends 'customer_home.html' %}
+{% block title %} 
+<title>DriveMate - Edit Profile</title>
+{% endblock %}
+  {% block content %}
+
+  <main class="container mx-auto px-6 py-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6">
+
+      {% if messages %}
+        <div class="space-y-3 mb-4">
+          {% for message in messages %}
+            <div class="rounded-lg p-3
+              {% if message.tags == 'error' %} bg-red-50 border border-red-200 text-red-800
+              {% else %} bg-emerald-50 border border-emerald-200 text-emerald-800 {% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <h2 class="text-xl font-semibold mb-4">Edit Customer Profile</h2>
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 gap-4">
+          <label class="block">
+            <span class="text-sm text-gray-600">Name</span>
+            <input type="text" name="name" value="{{ user.name }}" class="mt-1 block w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+          </label>
+
+          <label class="block">
+            <span class="text-sm text-gray-600">Email</span>
+            <input type="email" name="email" value="{{ user.email }}" class="mt-1 block w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+          </label>
+
+          <label class="block">
+            <span class="text-sm text-gray-600">Phone</span>
+            <input type="text" name="phone" value="{{ user.phone }}" class="mt-1 block w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+          </label>
+
+          <label class="block">
+            <span class="text-sm text-gray-600">Gender</span>
+            <select name="gender" class="mt-1 block w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
+              <option value="">--</option>
+              <option value="male" {% if user.gender == "male" %}selected{% endif %}>Male</option>
+              <option value="female" {% if user.gender == "female" %}selected{% endif %}>Female</option>
+              <option value="other" {% if user.gender == "other" %}selected{% endif %}>Other</option>
+            </select>
+          </label>
+
+          <label class="block">
+            <span class="text-sm text-gray-600">Language</span>
+            <input type="text" name="language_preference" value="{{ user.language_preference }}" class="mt-1 block w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+          </label>
+
+          <label class="block">
+            <span class="text-sm text-gray-600">New Password <span class="text-xs text-gray-400">(Leave blank to keep current)</span></span>
+            <input type="password" name="password" placeholder="Leave blank to keep current" class="mt-1 block w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+          </label>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold">
+              <span class="material-symbols-outlined">save</span> Save
+            </button>
+            <a href="{% url 'customer_profile' %}" class="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50">Cancel</a>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </main>
+  <footer class=" w-full fixed flex bottom-0 bg-white border-t border-gray-200">
+    <div class="container mx-auto">
+    <nav class="flex justify-around">
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--text-secondary)] hover:text-[var(--primary-color)] flex-1" href="{% url 'customer_dashboard'%}">
+    <span class="material-symbols-outlined">home</span>
+    <span class="text-xs font-bold">Home</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--text-secondary)] hover:text-[var(--primary-color)] flex-1" href="{% url 'my_trips'%}">
+      <span class="material-symbols-outlined">local_taxi</span>
+      <span class="text-xs font-bold">Ride</span>
+      </a>
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--primary-color)] border-t-2 border-[var(--primary-color)] flex-1" href="{% url 'customer_profile' %}">
+    <span class="material-symbols-outlined">person</span>
+    <span class="text-xs font-bold">Profile</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--text-secondary)] hover:text-[var(--primary-color)] flex-1" href="{% url 'customer_payment_history'%}">
+    <span class="material-symbols-outlined">payment</span>
+    <span class="text-xs font-bold">Payments</span>
+    </a>
+    <a class="flex flex-col items-center justify-center gap-1 py-3 text-[var(--text-secondary)] hover:text-[var(--primary-color)] flex-1" href="#">
+    <span class="material-symbols-outlined">support_agent</span>
+    <span class="text-xs font-bold">Support</span>
+    </a>
+    </nav>
+    </div>
+    </footer> 
+  {% endblock %}

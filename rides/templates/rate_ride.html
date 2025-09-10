@@ -1,0 +1,217 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Rate Ride #{{ ride.pk }} — DriveMate</title>
+
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+  <script src="/static/tailwind.js"></script>
+
+  <style>
+    :root{
+      --text:#0f172a;
+      --muted:#6b7280;
+      --accent:#111827;
+      --card:#ffffff;
+      --border:#e6e6eb;
+    }
+    body{ font-family: 'Space Grotesk', sans-serif; background:#fafafa; color:var(--text); }
+    .material-symbols-outlined{ font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .star { cursor: pointer; }
+    .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
+  </style>
+</head>
+
+<body class="antialiased min-h-screen">
+  <!-- Header -->
+  <header class="bg-white shadow-sm">
+    <div class="container mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-3xl" style="color:var(--accent)">directions_car</span>
+        <h1 class="text-2xl font-bold tracking-tight">DriveMate</h1>
+      </div>
+      <div>
+        <a href="{% url 'customer_profile' %}" class="inline-flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-50 text-sm">
+          <span class="material-symbols-outlined">person</span> Profile
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-6 py-10">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-2xl font-extrabold text-gray-900 text-center mb-6">Rate Your Ride <span class="text-gray-500">#{{ ride.pk }}</span></h2>
+
+      {% if messages %}
+        <div class="space-y-2 mb-4">
+          {% for message in messages %}
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-start gap-4">
+          <!-- small avatar placeholder -->
+          <div class="flex-none">
+            <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-xl font-semibold text-gray-700">
+              {% if ride.driver.profile_pic.url %}
+                <img class="w-16 h-16 rounded-full" src="{{ ride.driver.profile_pic.url }}" alt="">
+              {% else %}
+              {{ ride.driver.user.name|slice:":1"|upper }}
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="flex-1">
+            <div class="text-sm text-gray-500">Driver</div>
+            <div class="font-semibold text-gray-900">{{ ride.driver.user.name|default:"Not assigned" }}</div>
+            <div class="text-sm text-gray-500 mt-2">
+              <span class="block"><strong>Vehicle:</strong> {{ ride.vehicle|default:"Not applicable" }}</span>
+              <span class="block"><strong>Start:</strong> {{ ride.start_location }}</span>
+              <span class="block"><strong>End:</strong> {{ ride.end_location }}</span>
+              <span class="block"><strong>Start time:</strong> {{ ride.start_time|date:"d M Y, H:i" }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rating form -->
+        <form method="POST" class="mt-6" novalidate>
+          {% csrf_token %}
+          <div class="space-y-4">
+
+            <!-- Interactive star rating -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Your rating</label>
+
+              <div class="flex items-center gap-3">
+                <div id="star-row" class="flex items-center">
+                  <!-- five stars; JS will mark .filled when active -->
+                  <svg class="star w-9 h-9 cursor-pointer" data-value="1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden>
+                    <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.167L12 18.896 3.664 23.164l1.402-8.167L-0.868 9.21 7.332 8.018 12 .587z"/>
+                  </svg>
+                  <svg class="star w-9 h-9 cursor-pointer" data-value="2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden>
+                    <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.167L12 18.896 3.664 23.164l1.402-8.167L-0.868 9.21 7.332 8.018 12 .587z"/>
+                  </svg>
+                  <svg class="star w-9 h-9 cursor-pointer" data-value="3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden>
+                    <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.167L12 18.896 3.664 23.164l1.402-8.167L-0.868 9.21 7.332 8.018 12 .587z"/>
+                  </svg>
+                  <svg class="star w-9 h-9 cursor-pointer" data-value="4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden>
+                    <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.167L12 18.896 3.664 23.164l1.402-8.167L-0.868 9.21 7.332 8.018 12 .587z"/>
+                  </svg>
+                  <svg class="star w-9 h-9 cursor-pointer" data-value="5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden>
+                    <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.167L12 18.896 3.664 23.164l1.402-8.167L-0.868 9.21 7.332 8.018 12 .587z"/>
+                  </svg>
+                </div>
+
+                <!-- numeric fallback input (hidden visually but available) -->
+                <div class="ml-4">
+                  <label for="id_score" class="sr-only">Score (1-5)</label>
+                  <input id="id_score" name="score" type="number" min="1" max="5" value="{{ form.score.value|default:5 }}" class="w-14 rounded-md border border-gray-200 text-sm px-2 py-1" />
+                </div>
+              </div>
+
+              {% if form.score.errors %}
+                <p class="text-red-600 text-sm mt-2">{{ form.score.errors }}</p>
+              {% endif %}
+            </div>
+
+            <!-- Feedback -->
+            <div>
+              <label for="id_feedback" class="block text-sm font-medium text-gray-700">Feedback (optional)</label>
+              <textarea id="id_feedback" name="feedback" rows="4" class="mt-1 block w-full rounded-lg border border-gray-200 p-3 text-sm focus:ring-2 focus:ring-gray-200">{{ form.feedback.value|default_if_none:"" }}</textarea>
+              {% if form.feedback.errors %}
+                <p class="text-red-600 text-sm mt-2">{{ form.feedback.errors }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-full bg-gray-900 text-white px-4 py-2 hover:opacity-95 transition">
+                <span class="material-symbols-outlined">star</span>
+                <span>Submit Rating</span>
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <a href="{% url 'trip_detail' ride.id %}" class="block text-center mt-4 text-sm text-gray-600 hover:underline">Back to trip</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="w-full fixed bottom-0 bg-white border-t border-gray-200">
+    <div class="container mx-auto">
+      <nav class="flex justify-around">
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-sm text-gray-500 flex-1" href="{% url 'customer_dashboard'%}">
+          <span class="material-symbols-outlined">home</span>
+          <span>Home</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-sm text-gray-500 flex-1" href="{% url 'my_trips'%}">
+          <span class="material-symbols-outlined">trip</span>
+          <span>My Trips</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-sm text-gray-500 flex-1" href="{% url 'customer_profile' %}">
+          <span class="material-symbols-outlined">person</span>
+          <span>Profile</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-sm text-gray-500 flex-1" href="{% url 'customer_payment_history'%}">
+          <span class="material-symbols-outlined">payment</span>
+          <span>Payments</span>
+        </a>
+        <a class="flex flex-col items-center justify-center gap-1 py-3 text-sm text-gray-500 flex-1" href="#">
+          <span class="material-symbols-outlined">support_agent</span>
+          <span>Support</span>
+        </a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- JS to make stars interactive and mirror value to numeric input -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const stars = Array.from(document.querySelectorAll('#star-row .star'));
+      const input = document.getElementById('id_score');
+
+      // set initial based on input value
+      const initial = Number(input.value) || 5;
+      setRating(initial);
+
+      stars.forEach(s => {
+        s.addEventListener('click', () => {
+          const v = Number(s.dataset.value);
+          setRating(v);
+          input.value = v;
+        });
+        s.addEventListener('mouseover', () => {
+          const v = Number(s.dataset.value);
+          highlight(v);
+        });
+        s.addEventListener('mouseout', () => {
+          setRating(Number(input.value) || 0);
+        });
+      });
+
+      function highlight(value) {
+        stars.forEach(s => {
+          if (Number(s.dataset.value) <= value) {
+            s.style.fill = '#111827';
+            s.style.stroke = '#111827';
+          } else {
+            s.style.fill = 'none';
+            s.style.stroke = '#9CA3AF';
+          }
+        });
+      }
+      function setRating(value) {
+        input.value = value;
+        highlight(value);
+      }
+    });
+  </script>
+</body>
+</html>
