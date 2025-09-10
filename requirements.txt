@@ -5,7 +5,3 @@ uvicorn
 dj-database-url 
 psycopg2-binary   
 requests
-<<<<<<< HEAD
-whitenoise
-=======
->>>>>>> a1d28e6607fcb3e04f9e842d5f02671882c6cc5a
