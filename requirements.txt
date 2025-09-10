@@ -4,3 +4,4 @@ django[spatialite]
 uvicorn
 dj-database-url 
 psycopg2-binary   
+requests

@@ -18,6 +18,9 @@ from rides.utils import haversine_distance
 from django.db.models import Q
 from django.db.models import Avg, Count, Prefetch
 
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
 def index(request):
     uid = request.session.get("user_id")
     role = request.session.get("user_role")

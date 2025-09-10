@@ -7,6 +7,7 @@ from rides.views import *
 from payments.views import *
 
 urlpatterns = [
+    path('health',health_check),
     path('admin/', admin.site.urls),
     path('', index,name='index'),
     path('model/', model,name='index'),
