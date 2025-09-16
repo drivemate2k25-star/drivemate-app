@@ -35,12 +35,12 @@
 
         <div class="w-full md:w-auto text-left md:text-right">
           <div class="text-sm text-gray-600 mb-2">Ride status</div>
-          {% if ride_request.get_status_display == "Pending" %}
-            <span class="inline-block px-3 py-1 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-100 text-sm">Pending</span>
-          {% elif ride_request.get_status_display == "Accepted" %}
+          {% if ride_request.ride.status == "requested" %}
+            <span class="inline-block px-3 py-1 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-100 text-sm">Requested</span>
+          {% elif ride_request.ride.status == "accepted" %}
             <span class="inline-block px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-100 text-sm">Accepted</span>
           {% else %}
-            <span class="inline-block px-3 py-1 rounded-full bg-gray-50 text-gray-700 border border-gray-100 text-sm">{{ ride_request.get_status_display }}</span>
+            <span class="inline-block px-3 py-1 rounded-full bg-gray-50 text-gray-700 border border-gray-100 text-sm">{{ ride_request.ride.status }}</span>
           {% endif %}
         </div>
       </div>
@@ -223,7 +223,7 @@
 
   // Start ride
   document.getElementById('start-ride')?.addEventListener('click', function() {
-    fetch(`/ride-requests/${{ ride_request.pk }}/set_ongoing/`, {
+    fetch(`/ride-requests/{{ ride_request.pk }}/set_ongoing/`, {
       method: 'POST',
       headers: {
         'X-CSRFToken': csrftoken,
@@ -254,7 +254,7 @@
     e.preventDefault();
     const form = e.currentTarget;
     const data = new FormData(form);
-    fetch(`/ride-requests/${{ ride_request.pk }}/end_ride/`, {
+    fetch(`/ride-requests/{{ ride_request.pk }}/end_ride/`, {
       method: 'POST',
       body: data,
       headers: { 'X-CSRFToken': csrftoken }

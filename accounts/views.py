@@ -316,7 +316,7 @@ def driver_register(request):
         )
 
         # --- Optional vehicle registration ---
-        if request.POST.get("with_car") == "yes":
+        if request.POST.get("with_car"):
             vehicle_type = (request.POST.get("vehicle_type") or "").strip()
             make = (request.POST.get("make") or "").strip()
             model_name = (request.POST.get("model") or "").strip()
@@ -423,7 +423,7 @@ def driver_register(request):
 
         # success
         messages.success(request, "Driver registered successfully. Please wait for verification.")
-        return redirect("/")
+        return redirect("/login/")
 
     # GET
     return render(request, "driver_register.html")
